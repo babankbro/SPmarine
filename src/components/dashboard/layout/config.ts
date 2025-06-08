@@ -8,4 +8,5 @@ export const navItems = [
   { key: "carriers", title: "Carrier", href: paths.dashboard.carriers, icon: "boat" },
 	{ key: "tugboats", title: "Tugboat", href: paths.dashboard.tugboats, icon: "boat" },
 	{ key: "stations", title: "Stations", href: paths.dashboard.stations, icon: "garage" },
+	{ key: "costs", title: "Costs", href: paths.dashboard.costs, icon: "money" },
 ] satisfies NavItemConfig[];

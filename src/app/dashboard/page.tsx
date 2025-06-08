@@ -22,7 +22,7 @@ import { useTugboat } from "@/hooks/use-tugboat";
 
 export default function Page(): React.JSX.Element {
 	const data = useOrder();
-  const tugboat = useTugboat();
+    const tugboat = useTugboat();
 
 	return (
 		<Grid container spacing={3}>
