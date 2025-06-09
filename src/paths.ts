@@ -7,7 +7,8 @@ export const paths = {
     carriers: "/dashboard/carriers",
     barges: "/dashboard/barges",
 		tugboats: "/dashboard/tugboats",
-    stations: "/dashboard/stations"
+    stations: "/dashboard/stations",
+	costs: "/dashboard/costs"
 		// account: "/dashboard/account",
 		// integrations: "/dashboard/integrations",
 		// settings: "/dashboard/settings",
