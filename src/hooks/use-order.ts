@@ -2,7 +2,7 @@
 
 import { useContext } from "react";
 
-import { OrderContext, OrderContextType } from "@/contexts/order-contex";
+import { OrderContext, OrderContextType } from "@/contexts/order-context";
 
 export function useOrder() {
 	const { data } = useContext<OrderContextType>(OrderContext);
