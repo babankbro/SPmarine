@@ -2,7 +2,7 @@
 
 import RouterLink from "next/link";
 import { usePathname } from "next/navigation";
-import { Drawer, Divider, Box, Stack, Typography } from "@mui/material"
+import { Drawer, Divider, Box, Stack, Typography } from "@mui/material";
 
 import type { NavItemConfig } from "@/types/nav";
 import { paths } from "@/paths";

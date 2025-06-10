@@ -5,13 +5,13 @@ import { Stack, Typography } from "@mui/material";
 import { TugboatDetailsForm } from "@/components/dashboard/tugboat/tugboat-details-form";
 
 interface Props {
-  params: { id: string };
+	params: { id: string };
 }
 
 export default function Page({ params }: Props): JSX.Element {
-  return (
-    <Grid lg={8} md={6} xs={12}>
-      <TugboatDetailsForm id={params.id} />
-    </Grid>
-  )
+	return (
+		<Grid lg={8} md={6} xs={12}>
+			<TugboatDetailsForm id={params.id} />
+		</Grid>
+	);
 }

@@ -24,7 +24,7 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
 				<LocalizationProvider>
 					<QueryProvider>
 						<UserProvider>
-              <ThemeProvider>{children}</ThemeProvider>
+							<ThemeProvider>{children}</ThemeProvider>
 						</UserProvider>
 					</QueryProvider>
 				</LocalizationProvider>

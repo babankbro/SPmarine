@@ -1,8 +1,8 @@
 // src/app/dashboard/costs/page.tsx
-'use client';
+"use client";
 
-import CostsPage from '@/components/dashboard/costs/page';
+import CostsPage from "@/components/dashboard/costs/page";
 
 export default function Page() {
-  return <CostsPage />;
+	return <CostsPage />;
 }

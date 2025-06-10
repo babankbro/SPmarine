@@ -6,10 +6,10 @@ import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { BargeProvider } from "@/contexts/barge-context";
 import { CarrierProvider } from "@/contexts/carrier-context";
 import { CustomerProvider } from "@/contexts/customer-context";
-import { OrderProvider } from "@/contexts/order-contex";
+import { OrderProvider } from "@/contexts/order-context";
 import { StationProvider } from "@/contexts/station-context";
 import { TugboatProvider } from "@/contexts/tugboat-context";
-import { CostProvider } from "./cost-context";
+import { CostProvider } from "@/contexts/cost-context";
 
 interface QueryProviderProps {
 	children: ReactNode;
@@ -23,9 +23,7 @@ function ServicesProvider({ children }: { children: React.ReactNode }) {
 					<OrderProvider>
 						<StationProvider>
 							<TugboatProvider>
-								<CostProvider>
-									{children}
-								</CostProvider>
+								<CostProvider>{children}</CostProvider>
 							</TugboatProvider>
 						</StationProvider>
 					</OrderProvider>
