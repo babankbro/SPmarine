@@ -34,15 +34,15 @@ export function CostProvider({ children }: { children: ReactNode }) {
 	});
 
 	const getByIds = (tugboatId: string, orderId: string) => {
-		return costList.find((cost: Cost) => cost.TugboatId === tugboatId && cost.OrderId === orderId);
+		return costList.find((cost: Cost) => cost.tugboatId === tugboatId && cost.orderId === orderId);
 	};
 
 	const getCostsByTugboat = (tugboatId: string) => {
-		return costList.filter((cost: Cost) => cost.TugboatId === tugboatId);
+		return costList.filter((cost: Cost) => cost.tugboatId === tugboatId);
 	};
 
 	const getCostsByOrder = (orderId: string) => {
-		return costList.filter((cost: Cost) => cost.OrderId === orderId);
+		return costList.filter((cost: Cost) => cost.orderId === orderId);
 	};
 
 	return (

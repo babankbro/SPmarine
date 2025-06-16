@@ -35,9 +35,7 @@ export function CarrierTable({ count, rows, page, rowsPerPage = 0 }: CarrierTabl
 								<Checkbox
 									checked={selectedAll}
 									indeterminate={selectedSome}
-									onChange={(event) => {
-										event.target.checked ? selectAll() : deselectAll();
-									}}
+									onChange={(event) => (event.target.checked ? selectAll() : deselectAll())}
 								/>
 							</TableCell>
 							<TableCell>Name</TableCell>

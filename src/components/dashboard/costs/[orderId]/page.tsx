@@ -1,13 +1,15 @@
-// SPmarine/src/app/dashboard/costs/[tugboatId]/[orderId]/page.tsx
 "use client";
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Typography, Box, Container, Paper, Grid, Button, CircularProgress, Card, CardContent } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { useCost } from "../../../../../contexts/cost-context";
-import { useTugboat } from "../../../../../contexts/tugboat-context";
-import { useOrder } from "../../../../../contexts/order-context";
+import { ArrowLeft as ArrowLeftIcon } from "@phosphor-icons/react";
+
+import { useCost } from "@/contexts/cost-context";
+import { useTugboat } from "@/contexts/tugboat-context";
+import { useOrder } from "@/contexts/order-context";
+// import { useTugboat } from "@/hooks/use-tugboat";
+// import { useOrder } from "@/hooks/use-order";
 
 export default function CostDetailPage() {
 	const params = useParams();
@@ -19,9 +21,10 @@ export default function CostDetailPage() {
 	const { getById: getTugboat } = useTugboat();
 	const { getById: getOrder } = useOrder();
 
+	console.log(getTugboat);
 	const cost = getByIds(tugboatId, orderId);
-	const tugboat = cost ? getTugboat(cost.TugboatId) : null;
-	const order = cost ? getOrder(cost.OrderId) : null;
+	// const tugboat = cost ? getTugboat(cost.tugboatId) : null;
+	// const order = cost ? getOrder(cost.orderId) : null;
 
 	useEffect(() => {
 		document.title = cost ? `Cost Detail | Dashboard` : "Cost Detail | Dashboard";
@@ -48,7 +51,7 @@ export default function CostDetailPage() {
 				<Typography variant="h5" color="error">
 					Cost record not found
 				</Typography>
-				<Button startIcon={<ArrowBackIcon />} onClick={() => router.push("/dashboard/costs")} sx={{ mt: 2 }}>
+				<Button startIcon={<ArrowLeftIcon />} onClick={() => router.push("/dashboard/costs")} sx={{ mt: 2 }}>
 					Back to Costs
 				</Button>
 			</Container>
@@ -58,7 +61,7 @@ export default function CostDetailPage() {
 	return (
 		<Container>
 			<Box sx={{ py: 3 }}>
-				<Button startIcon={<ArrowBackIcon />} onClick={() => router.push("/dashboard/costs")} sx={{ mb: 3 }}>
+				<Button startIcon={<ArrowLeftIcon />} onClick={() => router.push("/dashboard/costs")} sx={{ mb: 3 }}>
 					Back to Costs
 				</Button>
 
@@ -73,7 +76,7 @@ export default function CostDetailPage() {
 								<Typography variant="h6" gutterBottom>
 									Tugboat Information
 								</Typography>
-								<Typography variant="body1">ID: {cost.TugboatId}</Typography>
+								<Typography variant="body1">ID: {cost.tugboatId}</Typography>
 								{tugboat && <Typography variant="body1">Name: {tugboat.name}</Typography>}
 							</CardContent>
 						</Card>
@@ -85,8 +88,7 @@ export default function CostDetailPage() {
 								<Typography variant="h6" gutterBottom>
 									Order Information
 								</Typography>
-								<Typography variant="body1">Order ID: {cost.OrderId}</Typography>
-								{/* Display additional order details here if available */}
+								<Typography variant="body1">Order ID: {cost.orderId}</Typography>
 							</CardContent>
 						</Card>
 					</Grid>
@@ -102,31 +104,31 @@ export default function CostDetailPage() {
 										<Typography variant="body2" color="textSecondary">
 											Time (hours)
 										</Typography>
-										<Typography variant="body1">{formatNumber(cost.Time)}</Typography>
+										<Typography variant="body1">{formatNumber(cost.time)}</Typography>
 									</Grid>
 									<Grid item xs={12} sm={6} md={4}>
 										<Typography variant="body2" color="textSecondary">
 											Distance (km)
 										</Typography>
-										<Typography variant="body1">{formatNumber(cost.Distance)}</Typography>
+										<Typography variant="body1">{formatNumber(cost.distance)}</Typography>
 									</Grid>
 									<Grid item xs={12} sm={6} md={4}>
 										<Typography variant="body2" color="textSecondary">
 											Consumption Rate
 										</Typography>
-										<Typography variant="body1">{formatNumber(cost.ConsumptionRate)}</Typography>
+										<Typography variant="body1">{formatNumber(cost.consumptionRate)}</Typography>
 									</Grid>
 									<Grid item xs={12} sm={6} md={4}>
 										<Typography variant="body2" color="textSecondary">
 											Cost
 										</Typography>
-										<Typography variant="body1">{formatNumber(cost.Cost)}</Typography>
+										<Typography variant="body1">{formatNumber(cost.cost)}</Typography>
 									</Grid>
 									<Grid item xs={12} sm={6} md={4}>
 										<Typography variant="body2" color="textSecondary">
 											Total Load
 										</Typography>
-										<Typography variant="body1">{formatNumber(cost.TotalLoad)}</Typography>
+										<Typography variant="body1">{formatNumber(cost.totalLoad)}</Typography>
 									</Grid>
 								</Grid>
 							</CardContent>

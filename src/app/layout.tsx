@@ -6,7 +6,7 @@ import { UserProvider } from "@/contexts/user-context";
 import { LocalizationProvider } from "@/components/core/localization-provider";
 import { ThemeProvider } from "@/components/core/theme-provider/theme-provider";
 import { QueryProvider } from "@/contexts/query-context";
-import { OrderProvider } from "@/contexts/order-contex";
+import { OrderProvider } from "@/contexts/order-context";
 import { TugboatProvider } from "@/contexts/tugboat-context";
 import { CustomerProvider } from "@/contexts/customer-context";
 import { BargeProvider } from "@/contexts/barge-context";

@@ -104,7 +104,7 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 	const [totalTime, setTotalTime] = useState(0);
 	const [totalWeight, setTotalWeight] = useState(0);
 	const tugboatList: Tugboat[] = useTugboat();
-	const orderList: Order[] = useOrder();
+	const orderList = useOrder();
 
 	if (!costs) return <></>;
 
@@ -280,7 +280,7 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 					<TableBody>
 						{filteredCosts.length > 0 ? (
 							filteredCosts.map((cost, index) => {
-								const tugboat = tugboatList?.find((t) => t.id === cost.tugboatId);
+								// const tugboat = tugboatList?.find((t) => t.id === cost.tugboatId);
 								// Calculate derived values
 								const fuelUsed = cost.time * cost.consumptionRate;
 								const litersPerTon = cost.totalLoad > 0 ? fuelUsed / cost.totalLoad : 0;
@@ -297,7 +297,8 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 											},
 										}}
 									>
-										<TableCell sx={{ fontWeight: "medium" }}>{tugboat?.name || cost.tugboatId}</TableCell>
+										{/*<TableCell sx={{ fontWeight: "medium" }}>{tugboat?.name || cost.tugboatId}</TableCell>
+										 */}
 										<TableCell>{cost.orderId}</TableCell>
 										<TableCell>{formatNumber(cost.totalLoad)}</TableCell>
 										<TableCell>{formatNumber(cost.distance)}</TableCell>
