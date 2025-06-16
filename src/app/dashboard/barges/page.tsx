@@ -1,33 +1,41 @@
 "use client";
 
-import { JSX, useState, ChangeEvent } from "react";
+import React, { useState } from "react";
+import type { JSX, ChangeEvent } from "react";
 import Link from "next/link";
-import { Stack, Typography, Button }from "@mui/material";
+import { Button, Stack, Typography } from "@mui/material";
 import { Download as DownloadIcon } from "@phosphor-icons/react/dist/ssr/Download";
 import { Plus as PlusIcon } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Upload as UploadIcon } from "@phosphor-icons/react/dist/ssr/Upload";
 
 import { BargeTable } from "@/components/dashboard/barge/barge-table";
+import type { Barge } from "@/types/barge";
 import { useBarge } from "@/hooks/use-barge";
-import { Barge } from "@/types/barge";
 import { paths } from "@/paths";
+
+// Disable static pre-rendering for this route since it uses client-side React contexts
+export const dynamic = 'force-dynamic';
 
 export default function Page(): JSX.Element {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
 
-  const barge: Barge[] = useBarge();
-  const paginatedBarges = applyPagination(barge, page, rowsPerPage);
+  const bargeContext = useBarge();
+  const paginatedBarges = applyPagination(bargeContext.barge || [], page, rowsPerPage);
 
-  const handleImport = () => {}
+  const handleImport = (): void => {
+    // TODO: Implement import functionality
+  };
 
-  const handleExport = () => {}
+  const handleExport = (): void => {
+    // TODO: Implement export functionality
+  };
 
-  const handlePageChange = (event: unknown, newPage: number) => {
+  const handlePageChange = (event: unknown, newPage: number): void => {
     setPage(newPage);
-  }
+  };
 
-  const handleRowsPerPageChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const handleRowsPerPageChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -67,7 +75,7 @@ export default function Page(): JSX.Element {
       </Stack>
       {/* <CustomersFilters /> */}
       <BargeTable
-        count={barge.length}
+        count={bargeContext.barge?.length || 0}
         page={page}
         rows={paginatedBarges}
         rowsPerPage={rowsPerPage}
@@ -75,9 +83,9 @@ export default function Page(): JSX.Element {
         onRowsPerPageChange={handleRowsPerPageChange}
       />
     </Stack>
-  )
+  );
 }
 
-function applyPagination(rows: Barge[], page: number, rowsPerPage: number) {
+function applyPagination(rows: Barge[], page: number, rowsPerPage: number): Barge[] {
   return rows.slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage);
 }

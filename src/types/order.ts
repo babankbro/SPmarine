@@ -1,4 +1,4 @@
-export type Order = {
+export interface Order {
 	id: string;
 	type: string;
 	fromPoint: string;
@@ -22,4 +22,4 @@ export type Order = {
 	timeReadyCR5: number;
 	timeReadyCR6: number;
 	timeReadyCR7: number;
-};
+}

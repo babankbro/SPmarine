@@ -2,15 +2,15 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { http } from '../http';
-import { Cost } from '../types/cost';
+import type { Cost } from '../types/cost';
 
 interface CostContextType {
   costList: Cost[];
   isLoading: boolean;
   isError: boolean;
-  refreshData: () => void;
+  refreshData: () => Promise<void>;
   getByIds: (tugboatId: string, orderId: string) => Cost | undefined;
   getCostsByTugboat: (tugboatId: string) => Cost[];
   getCostsByOrder: (orderId: string) => Cost[];
@@ -18,12 +18,10 @@ interface CostContextType {
 
 const CostContext = createContext<CostContextType | undefined>(undefined);
 
-export function CostProvider({ children }: { children: React.ReactNode }) {
-  const queryClient = useQueryClient();
-
+export function CostProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { data: costList = [], isLoading, isError, refetch } = useQuery({
     queryKey: ['costs'],
-    queryFn: async () => {
+    queryFn: async (): Promise<Cost[]> => {
         //console.log('Fetching costs data...');
         const response = await http.get<Cost[]>('costs');
         //console.log('API response for costs:', response);
@@ -32,19 +30,19 @@ export function CostProvider({ children }: { children: React.ReactNode }) {
     }
   });
 
-  const refreshData = () => {
-    refetch();
+  const refreshData = async (): Promise<void> => {
+    await refetch();
   };
 
-  const getByIds = (tugboatId: string, orderId: string) => {
+  const getByIds = (tugboatId: string, orderId: string): Cost | undefined => {
     return costList.find((cost) => cost.TugboatId === tugboatId && cost.OrderId === orderId);
   };
 
-  const getCostsByTugboat = (tugboatId: string) => {
+  const getCostsByTugboat = (tugboatId: string): Cost[] => {
     return costList.filter((cost) => cost.TugboatId === tugboatId);
   };
 
-  const getCostsByOrder = (orderId: string) => {
+  const getCostsByOrder = (orderId: string): Cost[] => {
     return costList.filter((cost) => cost.OrderId === orderId);
   };
 
@@ -65,7 +63,7 @@ export function CostProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useCost() {
+export function useCost(): CostContextType {
   const context = useContext(CostContext);
   
   if (context === undefined) {

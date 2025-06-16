@@ -1,4 +1,5 @@
+import React from "react";
 
-export function Table() {
-  return <></>
+export function Table(): React.JSX.Element | null {
+  return null;
 }

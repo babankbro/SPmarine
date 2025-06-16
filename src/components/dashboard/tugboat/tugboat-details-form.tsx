@@ -1,18 +1,31 @@
 "use client";
 
-import { Button, Divider, FormControl, InputLabel, OutlinedInput, Select } from "@mui/material";
-import { Card, CardHeader, CardContent, CardActions, MenuItem } from "@mui/material";
-import { JSX, useContext, useEffect } from "react";
-import Grid from "@mui/material/Unstable_Grid2";
+import React, { useContext, useEffect } from "react";
+import { 
+  Button, 
+  Divider, 
+  FormControl, 
+  InputLabel, 
+  OutlinedInput, 
+  Select,
+  Card, 
+  CardHeader, 
+  CardContent, 
+  CardActions, 
+  MenuItem,
+  Grid
+} from "@mui/material";
 import dayjs from "dayjs";
 
-import { TugboatContext, TugboatContextType } from "@/contexts/tugboat-context";
+import type { JSX } from "react";
+import type { TugboatContextType } from "@/contexts/tugboat-context";
+import { TugboatContext } from "@/contexts/tugboat-context";
 
-interface Props {
+interface TugboatDetailsFormProps {
   id: string;
 }
 
-export function TugboatDetailsForm({ id }: Props): JSX.Element {
+export function TugboatDetailsForm({ id }: TugboatDetailsFormProps): JSX.Element {
   const { selectedTugboat, getById } = useContext<TugboatContextType>(TugboatContext);
   
   useEffect(() => {

@@ -1,4 +1,4 @@
-import * as React from "react";
+import { useState, useEffect, useCallback } from "react";
 
 export interface Selection<T = string> {
 	deselectAll: () => void;
@@ -12,17 +12,17 @@ export interface Selection<T = string> {
 
 // IMPORTANT: To prevent infinite loop, `keys` argument must be memoized with React.useMemo hook.
 export function useSelection<T = string>(keys: T[] = []): Selection<T> {
-	const [selected, setSelected] = React.useState<Set<T>>(new Set());
+	const [selected, setSelected] = useState<Set<T>>(new Set());
 
-	React.useEffect(() => {
+	useEffect(() => {
 		setSelected(new Set());
 	}, [keys]);
 
-	const handleDeselectAll = React.useCallback(() => {
+	const handleDeselectAll = useCallback((): void => {
 		setSelected(new Set());
 	}, []);
 
-	const handleDeselectOne = React.useCallback((key: T) => {
+	const handleDeselectOne = useCallback((key: T): void => {
 		setSelected((prev) => {
 			const copy = new Set(prev);
 			copy.delete(key);
@@ -30,11 +30,11 @@ export function useSelection<T = string>(keys: T[] = []): Selection<T> {
 		});
 	}, []);
 
-	const handleSelectAll = React.useCallback(() => {
+	const handleSelectAll = useCallback((): void => {
 		setSelected(new Set(keys));
 	}, [keys]);
 
-	const handleSelectOne = React.useCallback((key: T) => {
+	const handleSelectOne = useCallback((key: T): void => {
 		setSelected((prev) => {
 			const copy = new Set(prev);
 			copy.add(key);

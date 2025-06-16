@@ -1,13 +1,15 @@
-import * as React from "react";
+import React, { useCallback } from "react";
 import RouterLink from "next/link";
 import { useRouter } from "next/navigation";
-import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import MenuItem from "@mui/material/MenuItem";
-import MenuList from "@mui/material/MenuList";
-import Popover from "@mui/material/Popover";
-import Typography from "@mui/material/Typography";
+import {
+  Box,
+  Divider,
+  ListItemIcon,
+  MenuItem,
+  MenuList,
+  Popover,
+  Typography
+} from "@mui/material";
 import { GearSix as GearSixIcon } from "@phosphor-icons/react/dist/ssr/GearSix";
 import { SignOut as SignOutIcon } from "@phosphor-icons/react/dist/ssr/SignOut";
 import { User as UserIcon } from "@phosphor-icons/react/dist/ssr/User";
@@ -28,7 +30,7 @@ export function UserPopover({ anchorEl, onClose, open }: UserPopoverProps): Reac
 
 	const router = useRouter();
 
-	const handleSignOut = React.useCallback(async (): Promise<void> => {
+	const handleSignOut = useCallback(async (): Promise<void> => {
 		try {
 			const { error } = await authClient.signOut();
 

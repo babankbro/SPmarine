@@ -1,26 +1,35 @@
 "use client";
 
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import { JSX } from "react";
+import React from "react";
+import {
+  Button,
+  Stack,
+  Typography
+} from "@mui/material";
+import type { JSX } from "react";
 import { Download as DownloadIcon } from "@phosphor-icons/react/dist/ssr/Download";
 import { Plus as PlusIcon } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Upload as UploadIcon } from "@phosphor-icons/react/dist/ssr/Upload";
 
 import { CarrierTable } from "@/components/dashboard/carrier/carrier-table";
 import { useCarrier } from "@/hooks/use-carrier";
-import { Carrier } from "@/types/carrier";
+import type { Carrier } from "@/types/carrier";
 
+// Disable static pre-rendering for this route since it uses client-side React contexts
+export const dynamic = 'force-dynamic';
 
 export default function Page(): JSX.Element {
-  const carrier: Carrier[] = useCarrier();
+  const carrierContext = useCarrier();
   const page = 0;
   const rowsPerPage = 5;
-  const paginatedCarrier = applyPagination(carrier, page, rowsPerPage);
+  const paginatedCarrier = applyPagination(carrierContext.carrier || [], page, rowsPerPage);
 
-  const handleImport = () => {}
-  const handleExport = () => {}
+  const handleImport = (): void => {
+    // TODO: Implement import functionality
+  }
+  const handleExport = (): void => {
+    // TODO: Implement export functionality
+  }
 
   return (
     <Stack spacing={3}>
@@ -52,7 +61,7 @@ export default function Page(): JSX.Element {
       </Stack>
       {/* <CustomersFilters /> */}
       <CarrierTable
-        count={paginatedCarrier.length}
+        count={carrierContext.carrier?.length || 0}
         page={page}
         rows={paginatedCarrier}
         rowsPerPage={rowsPerPage}
@@ -61,6 +70,6 @@ export default function Page(): JSX.Element {
   )
 }
 
-function applyPagination(rows: Carrier[], page: number, rowsPerPage: number) {
+function applyPagination(rows: Carrier[], page: number, rowsPerPage: number): Carrier[] {
   return rows.slice(page * rowsPerPage, (page * rowsPerPage) + rowsPerPage);
 }

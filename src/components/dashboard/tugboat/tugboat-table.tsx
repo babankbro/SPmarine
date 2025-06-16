@@ -3,11 +3,23 @@
 import * as React from "react";
 import dayjs from "dayjs";
 import RouterLink from "next/link";
-import { Box, Typography, Link, Divider, Card, Checkbox } from "@mui/material";
-import { Table, TableHead, TableBody, TableRow, TableCell, TablePagination } from "@mui/material";
+import { 
+  Box, 
+  Typography, 
+  Link, 
+  Divider, 
+  Card, 
+  Checkbox,
+  Table, 
+  TableHead, 
+  TableBody, 
+  TableRow, 
+  TableCell, 
+  TablePagination 
+} from "@mui/material";
 
 import { useSelection } from "@/hooks/use-selection";
-import { Tugboat } from "@/types/tugboat";
+import type { Tugboat } from "@/types/tugboat";
 
 interface TugboatTableProps {
 	count: number;

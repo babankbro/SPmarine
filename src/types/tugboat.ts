@@ -1,5 +1,4 @@
-
-export type Tugboat = {
+export interface Tugboat {
 	id: string;
 	name: string;
 	maxCapacity: number;
@@ -15,4 +14,4 @@ export type Tugboat = {
 	waterStatus: "SEA" | "RIVER";
 	distanceKm: number;
 	readyDatetime: string;
-};
+}

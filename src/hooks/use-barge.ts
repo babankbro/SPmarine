@@ -1,14 +1,15 @@
 "use client";
 
 import { useContext } from "react";
+import { BargeContext } from "@/contexts/barge-context";
+import type { BargeContextType } from "@/contexts/barge-context";
 
-import { BargeContext, BargeContextType } from "@/contexts/barge-context";
-
-export function useBarge() {
-  const { barge } = useContext<BargeContextType>(BargeContext);
-  if (!barge) {
+export function useBarge(): BargeContextType {
+  const context = useContext<BargeContextType>(BargeContext);
+  
+  if (!context.barge) {
     throw new Error("useBarge must be used within a BargeProvider");
   }
-
-  return barge;
+  
+  return context;
 }

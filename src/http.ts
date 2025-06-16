@@ -1,20 +1,29 @@
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
+import type { AxiosResponse } from "axios";
 
-export const API_ENDPOINT: string = process.env.API_ENDPOINT || "http://localhost:5000";
-export const API_VERSION: string = process.env.API_VERSION || "v1";
+export const API_ENDPOINT = process.env.API_ENDPOINT || "http://localhost:5000";
+export const API_VERSION = process.env.API_VERSION || "v1";
 
-export const API_BASE: string = `${API_ENDPOINT}/${API_VERSION}`;
+export const API_BASE = `${API_ENDPOINT}/${API_VERSION}`;
 
 interface HTTP {
-	get<T>(entry: string, params?: Record<string, any>): Promise<AxiosResponse<T, any>>;
-	post<T>(entry: string, data?: any): Promise<AxiosResponse<T, any>>;
-	put<T>(entry: string, data?: any): Promise<AxiosResponse<T, any>>;
-	delete<T>(entry: string): Promise<AxiosResponse<T, any>>;
+	get: <T>(entry: string, params?: Record<string, unknown>) => Promise<AxiosResponse<T>>;
+	post: <T>(entry: string, data?: unknown) => Promise<AxiosResponse<T>>;
+	put: <T>(entry: string, data?: unknown) => Promise<AxiosResponse<T>>;
+	delete: <T>(entry: string) => Promise<AxiosResponse<T>>;
 }
 
 export const http: HTTP = {
-	get: <T>(entry: string, params?: Record<string, any>) => axios.get<T>(`${API_BASE}/${entry}`, { params }),
-	post: <T>(entry: string, data?: any) => axios.post<T>(`${API_BASE}/${entry}`, data),
-	put: <T>(entry: string, data?: any) => axios.put<T>(`${API_BASE}/${entry}`, data),
-	delete: <T>(entry: string) => axios.delete<T>(`${API_BASE}/${entry}`),
+	get: function<T>(entry: string, params?: Record<string, unknown>) {
+		return axios.get<T>(`${API_BASE}/${entry}`, { params });
+	},
+	post: function<T>(entry: string, data?: unknown) {
+		return axios.post<T>(`${API_BASE}/${entry}`, data);
+	},
+	put: function<T>(entry: string, data?: unknown) {
+		return axios.put<T>(`${API_BASE}/${entry}`, data);
+	},
+	delete: function<T>(entry: string) {
+		return axios.delete<T>(`${API_BASE}/${entry}`);
+	}
 };

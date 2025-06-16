@@ -1,27 +1,42 @@
 "use client";
 
-import { Button, Divider, FormControl, InputLabel, OutlinedInput, Select } from "@mui/material";
-import { Card, CardHeader, CardContent, CardActions, MenuItem } from "@mui/material";
-import { JSX, useContext, useEffect } from "react";
-import Grid from "@mui/material/Unstable_Grid2";
-import dayjs from "dayjs";
+import React, { useContext, useEffect } from "react";
+import { 
+  Button, 
+  Divider, 
+  FormControl, 
+  InputLabel, 
+  OutlinedInput, 
+  Select,
+  Card, 
+  CardHeader, 
+  CardContent, 
+  CardActions, 
+  MenuItem,
+  Grid,
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material";
 
-import { BargeContext, BargeContextType } from "@/contexts/barge-context";
+import type { JSX, ChangeEvent } from "react";
+import type { BargeContextType } from "@/contexts/barge-context";
+import { BargeContext } from "@/contexts/barge-context";
 
-interface Props {
+interface BargeDetailsFormProps {
 	id: string;
 }
 
-export function BargeDetailsForm({ id }: Props): JSX.Element {
+export function BargeDetailsForm({ id }: BargeDetailsFormProps): JSX.Element {
 	const { selectedBarge, getById } = useContext<BargeContextType>(BargeContext);
 
 	useEffect(() => {
-		if (id && getById) getById(id);
+		if (id && getById) void getById(id);
 	}, [id, getById]);
 
-	const handleChange = () => {};
-
-	console.log(selectedBarge);
+	const handleChange = (
+		_event: ChangeEvent<HTMLInputElement | { name?: string; value: unknown }> | SelectChangeEvent
+	): void => {
+		// Implementation will be added when needed
+	};
 
 	return (
 		<form

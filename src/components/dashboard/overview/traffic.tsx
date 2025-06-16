@@ -1,13 +1,15 @@
 "use client";
 
-import * as React from "react";
-import Card from "@mui/material/Card";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Stack from "@mui/material/Stack";
-import { useTheme } from "@mui/material/styles";
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Stack,
+  Typography,
+  useTheme
+} from "@mui/material";
 import type { SxProps } from "@mui/material/styles";
-import Typography from "@mui/material/Typography";
 import type { Icon } from "@phosphor-icons/react/dist/lib/types";
 import { Desktop as DesktopIcon } from "@phosphor-icons/react/dist/ssr/Desktop";
 import { DeviceTablet as DeviceTabletIcon } from "@phosphor-icons/react/dist/ssr/DeviceTablet";
@@ -16,7 +18,9 @@ import type { ApexOptions } from "apexcharts";
 
 import { Chart } from "@/components/core/chart";
 
-const iconMapping = { Desktop: DesktopIcon, Tablet: DeviceTabletIcon, Phone: PhoneIcon } as Record<string, Icon>;
+type IconMapping = Record<string, Icon>;
+
+const iconMapping: IconMapping = { Desktop: DesktopIcon, Tablet: DeviceTabletIcon, Phone: PhoneIcon };
 
 export interface TrafficProps {
 	chartSeries: number[];

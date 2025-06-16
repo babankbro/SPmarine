@@ -1,30 +1,40 @@
 "use client";
 
-import { createContext, ReactNode } from "react";
+import React from "react";
+import { createContext } from "react";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-import { Station } from "@/types/station";
+import type { Station } from "@/types/station";
 
 export interface StationContextType {
-	station?: Station[];
-	isError?: unknown;
-	isLoading: boolean;
+  station?: Station[];
+  isError?: unknown;
+  isLoading: boolean;
 }
-
-export interface StationProvidrProps {}
 
 export const StationContext = createContext<StationContextType>({ isLoading: true });
 
-export function StationProvider({ children }: { children: ReactNode }) {
-	const { data, isLoading } = useQuery<Station[]>({
-		queryKey: ["stations"],
-		queryFn: async () => {
-			return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/stations`)).data;
-		},
-	});
+export function StationProvider({ children }: { children: ReactNode }): React.JSX.Element | null {
+  const { data, isLoading } = useQuery<Station[]>({
+    queryKey: ["stations"],
+    queryFn: async (): Promise<Station[]> => {
+      const response = await axios.get<Station[]>(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/stations`);
+      return response.data;
+    },
+  });
 
-	if (!data) return <></>;
+  if (!data) return null;
 
-	return <StationContext.Provider value={{ station: data, isLoading: isLoading }}>{children}</StationContext.Provider>;
+  return (
+    <StationContext.Provider
+      value={{
+        station: data,
+        isLoading
+      }}
+    >
+      {children}
+    </StationContext.Provider>
+  );
 }

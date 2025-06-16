@@ -1,11 +1,21 @@
+"use client";
+
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Container from "@mui/material/Container";
 import GlobalStyles from "@mui/material/GlobalStyles";
 
-import { AuthGuard } from "@/components/auth/auth-guard";
 import { MainNav } from "@/components/dashboard/layout/main-nav";
 import { SideNav } from "@/components/dashboard/layout/side-nav";
+import { OrderProvider } from "@/contexts/order-context";
+import { StationProvider } from "@/contexts/station-context";
+import { TugboatProvider } from "@/contexts/tugboat-context";
+import { CostProvider } from "@/contexts/cost-context";
+import { CarrierProvider } from "@/contexts/carrier-context";
+import { BargeProvider } from "@/contexts/barge-context";
+
+// Disable static pre-rendering for this route since it uses client-side React contexts
+export const dynamic = 'force-dynamic';
 
 interface LayoutProps {
 	children: React.ReactNode;
@@ -13,8 +23,6 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps): React.JSX.Element {
 	return (
-		// <AuthGuard>
-		// </AuthGuard>
 		<>
 			<GlobalStyles
 				styles={{
@@ -42,7 +50,19 @@ export default function Layout({ children }: LayoutProps): React.JSX.Element {
 					<MainNav />
 					<main>
 						<Container maxWidth="xl" sx={{ py: "64px" }}>
-							{children}
+							<OrderProvider>
+								<StationProvider>
+									<TugboatProvider>
+										<CostProvider>
+											<CarrierProvider>
+												<BargeProvider>
+													{children}
+												</BargeProvider>
+											</CarrierProvider>
+										</CostProvider>
+									</TugboatProvider>
+								</StationProvider>
+							</OrderProvider>
 						</Container>
 					</main>
 				</Box>

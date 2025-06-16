@@ -1,14 +1,15 @@
 "use client";
 
 import { useContext } from "react";
+import { CarrierContext } from "@/contexts/carrier-context";
+import type { CarrierContextType } from "@/contexts/carrier-context";
 
-import { CarrierContext, CarrierContextType } from "@/contexts/carrier-context";
-
-export function useCarrier() {
-  const { carrier } = useContext<CarrierContextType>(CarrierContext);
-  if (!carrier) {
-    throw new Error("useBarge must be used within a BargeProvider");
+export function useCarrier(): CarrierContextType {
+  const context = useContext<CarrierContextType>(CarrierContext);
+  
+  if (!context.carrier) {
+    throw new Error("useCarrier must be used within a CarrierProvider");
   }
-
-  return carrier;
+  
+  return context;
 }

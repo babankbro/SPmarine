@@ -1,5 +1,5 @@
+import React from "react";
 import type { SxProps } from "@mui/material/styles";
-import { JSX } from "react";
 import { Avatar, Card, CardContent, Divider, Stack, Typography } from "@mui/material";
 import { Boat as BoatIcon } from "@phosphor-icons/react/dist/ssr/Boat";
 
@@ -8,14 +8,16 @@ export interface TaskOrderProps {
   count: number;
 }
 
-export function TaskOrder({ sx, count = 0 }: TaskOrderProps): JSX.Element {
+export function TaskOrder({ sx, count = 0 }: TaskOrderProps): React.JSX.Element {
   return (
     <Card sx={sx}>
       <CardContent>
         <Stack spacing={3}>
           <Stack direction="row" sx={{ alignItems: "flex-start", justifyContent: "space-between" }} spacing={3}>
             <Stack spacing={1}>
-              <Typography color="text.secondary" variant="overline" children={"Tugboat"} />
+              <Typography color="text.secondary" variant="overline">
+                Tugboat
+              </Typography>
               <Typography variant="h4">{count}</Typography>
             </Stack>
             <Avatar sx={{ backgroundColor: "var(--mui-palette-primary-main)", height: "56px", width: "56px" }}>

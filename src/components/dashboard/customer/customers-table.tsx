@@ -1,19 +1,21 @@
 "use client";
 
-import * as React from "react";
-import Avatar from "@mui/material/Avatar";
-import Box from "@mui/material/Box";
-import Card from "@mui/material/Card";
-import Checkbox from "@mui/material/Checkbox";
-import Divider from "@mui/material/Divider";
-import Stack from "@mui/material/Stack";
-import Table from "@mui/material/Table";
-import TableBody from "@mui/material/TableBody";
-import TableCell from "@mui/material/TableCell";
-import TableHead from "@mui/material/TableHead";
-import TablePagination from "@mui/material/TablePagination";
-import TableRow from "@mui/material/TableRow";
-import Typography from "@mui/material/Typography";
+import React, { useMemo } from "react";
+import {
+  Avatar,
+  Box,
+  Card,
+  Checkbox,
+  Divider,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TablePagination,
+  TableRow,
+  Typography
+} from "@mui/material";
 import dayjs from "dayjs";
 
 import { useSelection } from "@/hooks/use-selection";
@@ -39,7 +41,7 @@ interface CustomersTableProps {
 	rowsPerPage?: number;
 }
 
-function CustomeAvatar({ id }: { id: string }) {
+function CustomerAvatar({ id }: { id: string }) {
 	const getInit = (str: string) => {
 		if (!str) return "?";
 		return str.slice(0, 2).toUpperCase();
@@ -53,7 +55,7 @@ export function CustomersTable({
 	page = 0,
 	rowsPerPage = 0,
 }: CustomersTableProps): React.JSX.Element {
-	const rowIds = React.useMemo(() => {
+	const rowIds = useMemo(() => {
 		return rows.map((customer) => customer.id);
 	}, [rows]);
 
@@ -109,7 +111,7 @@ export function CustomersTable({
 									<TableCell>
 										<Stack sx={{ alignItems: "center" }} direction="row" spacing={2}>
 											{/* <Avatar src={row.avatar} /> */}
-											<CustomeAvatar id={row.id} />
+											<CustomerAvatar id={row.id} />
 											<Typography variant="subtitle2">{row.name}</Typography>
 										</Stack>
 									</TableCell>

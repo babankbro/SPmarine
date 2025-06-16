@@ -1,13 +1,12 @@
 "use client";
 
-// import Avatar from '@mui/material/Avatar';
-import * as React from "react";
-import Badge from "@mui/material/Badge";
-import Box from "@mui/material/Box";
-import IconButton from "@mui/material/IconButton";
-import Stack from "@mui/material/Stack";
-import Tooltip from "@mui/material/Tooltip";
-import { Bell as BellIcon } from "@phosphor-icons/react/dist/ssr/Bell";
+import React, { useState } from "react";
+import {
+  Box,
+  IconButton,
+  Stack,
+  Tooltip
+} from "@mui/material";
 import { List as ListIcon } from "@phosphor-icons/react/dist/ssr/List";
 import { MagnifyingGlass as MagnifyingGlassIcon } from "@phosphor-icons/react/dist/ssr/MagnifyingGlass";
 import { Sun } from "@phosphor-icons/react/dist/ssr/Sun";
@@ -19,12 +18,12 @@ import { MobileNav } from "./mobile-nav";
 import { UserPopover } from "./user-popover";
 
 export function MainNav(): React.JSX.Element {
-	const [openNav, setOpenNav] = React.useState<boolean>(false);
+	const [openNav, setOpenNav] = useState<boolean>(false);
 
 	const userPopover = usePopover<HTMLDivElement>();
 
 	return (
-		<React.Fragment>
+		<>
 			<Box
 				component="header"
 				sx={{
@@ -57,29 +56,25 @@ export function MainNav(): React.JSX.Element {
 					</Stack>
 					<Stack sx={{ alignItems: "center" }} direction="row" spacing={2}>
 						<Tooltip title="Contacts">
-							<IconButton children={<UsersIcon />} />
+							<IconButton>
+								<UsersIcon />
+							</IconButton>
 						</Tooltip>
 						<Tooltip title="ToggleMode">
 							<IconButton>
 								<Sun size={32} />
 							</IconButton>
 						</Tooltip>
-						{/* <Avatar
-              onClick={userPopover.handleOpen}
-              ref={userPopover.anchorRef}
-              src="/assets/avatar.png"
-              sx={{ cursor: 'pointer' }}
-            /> */}
 					</Stack>
 				</Stack>
 			</Box>
 			<UserPopover anchorEl={userPopover.anchorRef.current} onClose={userPopover.handleClose} open={userPopover.open} />
 			<MobileNav
-				onClose={() => {
+				onClose={(): void => {
 					setOpenNav(false);
 				}}
 				open={openNav}
 			/>
-		</React.Fragment>
+		</>
 	);
 }

@@ -25,8 +25,8 @@ export interface DynamicLogoProps {
 	width?: number;
 }
 
-export function Logo({ emblem, height = HEIGHT, width = WIDTH }: LogoProps): React.JSX.Element {
-	let url: string = "/assets/intermarine_logo.png";
+export function Logo({ emblem: _emblem, height = HEIGHT, width = WIDTH }: LogoProps): React.JSX.Element {
+	const url = "/assets/intermarine_logo.png";
 
 	// if (emblem) {
 	// 	url = color === "light" ? "/assets/logo-emblem.svg" : "/assets/logo-emblem--dark.svg";
@@ -45,7 +45,7 @@ export function DynamicLogo({
 	...props
 }: DynamicLogoProps): React.JSX.Element {
 	const { colorScheme } = useColorScheme();
-	const color = colorScheme === "dark" ? colorDark : colorLight;
+	const _color = colorScheme === "dark" ? colorDark : colorLight;
 
 	return (
 		<NoSsr fallback={<Box sx={{ height: `${height}px`, width: `${width}px` }} />}>

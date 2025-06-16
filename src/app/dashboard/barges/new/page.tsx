@@ -1,15 +1,30 @@
 "use client";
 
+import React, { useState } from "react";
 import Grid from "@mui/material/Unstable_Grid2";
 import dayjs from "dayjs";
 import axios from "axios";
-import { Button, Divider, FormControl, InputLabel, MenuItem, OutlinedInput, Select } from "@mui/material";
-import { Card, CardActions, CardContent, CardHeader } from "@mui/material";
-import { FormEvent, useState } from "react";
+import { 
+  Button, 
+  Divider, 
+  FormControl, 
+  InputLabel, 
+  MenuItem, 
+  OutlinedInput, 
+  Select,
+  Card, 
+  CardActions, 
+  CardContent, 
+  CardHeader,
+  Snackbar,
+  Alert
+} from "@mui/material";
+import type { SelectChangeEvent } from "@mui/material";
+import type { FormEvent } from "react";
 
-import { Barge } from "@/types/barge";
+import type { Barge } from "@/types/barge";
 
-export default function Page() {
+export default function Page(): React.ReactNode {
   const [formData, setFormData] = useState<Barge>({
     id: "",
     name: "",
@@ -24,33 +39,62 @@ export default function Page() {
     readyDatetime: dayjs().format("YYYY-MM-DDTHH:mm"),
   });
 
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
+  const [notification, setNotification] = useState<{ message: string; severity: "success" | "error" } | null>(null);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | { name?: string; value: unknown }>): void => {
+    const name = e.target.name as keyof Barge;
+    const value = e.target.value;
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: name === "maxCapacity" || name === "maxBarge" || name === "maxFuelCon" ||
-              name === "minSpeed" || name === "maxSpeed" || name === "engineRpm" ||
-              name === "horsePower" || name === "latitude" || name === "longitude" ||
-              name === "distanceKm"
-        ? Number(value)
-        : value,
+      [name]: 
+        name === "weight" || 
+        name === "capacity" || 
+        name === "latitude" || 
+        name === "longitude" ||
+        name === "distanceKm" ||
+        name === "setupTime"
+          ? Number(value)
+          : value,
     }));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSelectChange = (e: SelectChangeEvent): void => {
+    const { name, value } = e.target;
+    
+    setFormData((prev) => ({
+      ...prev,
+      [name as keyof Barge]: value,
+    }));
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
     try {
-      const res = await axios.post(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`, formData)
-      if (res.data.status === 201)
-        alert("failed")
-
-      alert('success');
-      window.history.back();
-    } catch (e) {
-      console.error("failed: ", e);
+      const response = await axios.post(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`, formData);
+      if (response.status === 201) {
+        setNotification({ message: "Success! Barge created.", severity: "success" });
+        setOpenSnackbar(true);
+        setTimeout(() => {
+          window.history.back();
+        }, 1500);
+      }
+      else {
+        setNotification({ message: "Failed to create barge. Please try again.", severity: "error" });
+        setOpenSnackbar(true);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      setNotification({ message: `Failed to create barge: ${errorMessage}`, severity: "error" });
+      setOpenSnackbar(true);
     }
   }
+
+  const handleSnackbarClose = (): void => {
+    setOpenSnackbar(false);
+  };
 
   return (
     <form
@@ -92,7 +136,7 @@ export default function Page() {
               <FormControl fullWidth required>
                 <InputLabel>Weight</InputLabel>
                 <OutlinedInput
-                  label="Max Capacity"
+                  label="Weight"
                   value={formData.weight}
                   onChange={handleChange}
                   name="weight"
@@ -130,7 +174,7 @@ export default function Page() {
                 <InputLabel>Water Status</InputLabel>
                 <Select
                   value={formData.waterStatus}
-                  onChange={handleChange}
+                  onChange={handleSelectChange}
                   label="Water Status"
                   name="waterStatus"
                   variant="outlined"
@@ -185,7 +229,7 @@ export default function Page() {
                   label="SetupTime"
                   value={formData.setupTime}
                   onChange={handleChange}
-                  name="SetupTime" />
+                  name="setupTime" />
               </FormControl>
             </Grid>
 
@@ -198,7 +242,7 @@ export default function Page() {
                   type="datetime-local"
                   value={formData.readyDatetime || ""}
                   onChange={handleChange}
-                  name="readyDateTime" />
+                  name="readyDatetime" />
               </FormControl>
             </Grid>
 
@@ -209,6 +253,21 @@ export default function Page() {
           <Button variant="contained" type="submit">Add new</Button>
         </CardActions>
       </Card>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        {notification ? (
+          <Alert 
+            onClose={handleSnackbarClose} 
+            severity={notification.severity} 
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
     </form>
   )
 }

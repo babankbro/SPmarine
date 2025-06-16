@@ -1,10 +1,12 @@
 "use client";
 
-import { createContext, ReactNode, useState } from "react";
+import React from "react";
+import { createContext, useState } from "react";
+import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
-import { Barge } from "@/types/barge";
+import type { Barge } from "@/types/barge";
 
 export interface BargeContextType {
   barge?: Barge[];
@@ -14,41 +16,40 @@ export interface BargeContextType {
   getById?: (id: string) => Promise<void>;
 }
 
-export interface BargeProvidrProps {}
-
 export const BargeContext = createContext<BargeContextType>({ isLoading: true });
 
-export function BargeProvider({ children }: { children: ReactNode }) {
+export function BargeProvider({ children }: { children: ReactNode }): React.JSX.Element | null {
   const [selectedBarge, setSelectedTugboat] = useState<Barge>();
   const queryClient = useQueryClient();
 
   const { data, isLoading } = useQuery<Barge[]>({
     queryKey: ["barges"],
-    queryFn: async () => {
-      return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`)).data;
+    queryFn: async (): Promise<Barge[]> => {
+      const response = await axios.get<Barge[]>(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`);
+      return response.data;
     },
   });
 
-  const getById = async (id: string) => {
+  const getById = async (id: string): Promise<void> => {
     const cached = queryClient.getQueryData<Barge[]>(["barges"])?.find((t) => t.id === id);
     if (cached) {
       setSelectedTugboat(cached);
       return;
     }
 
-    const res = await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges/${id}`);
+    const res = await axios.get<Barge>(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges/${id}`);
     setSelectedTugboat(res.data);
-  }
+  };
 
-  if (!data) return <></>
+  if (!data) return null;
 
   return (
     <BargeContext.Provider
       value={{
         barge: data,
-        isLoading: isLoading,
-        getById: getById,
-        selectedBarge: selectedBarge
+        isLoading,
+        getById,
+        selectedBarge
       }}
     >
       {children}

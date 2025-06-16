@@ -1,33 +1,43 @@
 "use client";
 
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import { ChangeEvent, JSX, useState } from "react";
+import React, { useState } from "react";
+import {
+  Button,
+  Stack,
+  Typography
+} from "@mui/material";
 import { Download as DownloadIcon } from "@phosphor-icons/react/dist/ssr/Download";
 import { Plus as PlusIcon } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Upload as UploadIcon } from "@phosphor-icons/react/dist/ssr/Upload";
 
 import { StationTable } from "@/components/dashboard/station/station-table";
 import { useStation } from "@/hooks/use-station";
-import { Station } from "@/types/station";
+import type { Station } from "@/types/station"; 
+import type { ChangeEvent, JSX } from "react";
+
+// Disable static pre-rendering for this route since it uses client-side React contexts
+export const dynamic = 'force-dynamic';
 
 export default function Page(): JSX.Element {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(5);
 
-	const station: Station[] = useStation();
-	const paginatedBarges = applyPagination(station, page, rowsPerPage);
+	const stationContext = useStation();
+	const paginatedBarges = applyPagination(stationContext.station || [], page, rowsPerPage);
 
-	const handleImport = () => {};
+	const handleImport = (): void => {
+		// TODO: Implement import functionality
+	};
 
-	const handleExport = () => {};
+	const handleExport = (): void => {
+		// TODO: Implement export functionality
+	};
 
-	const handlePageChange = (event: unknown, newPage: number) => {
+	const handlePageChange = (event: unknown, newPage: number): void => {
 		setPage(newPage);
 	};
 
-	const handleRowsPerPageChange = (event: ChangeEvent<HTMLInputElement>) => {
+	const handleRowsPerPageChange = (event: ChangeEvent<HTMLInputElement>): void => {
 		setRowsPerPage(parseInt(event.target.value, 10));
 		setPage(0);
 	};
@@ -62,7 +72,7 @@ export default function Page(): JSX.Element {
 			</Stack>
 			{/* <CustomersFilters /> */}
 			<StationTable
-				count={station.length}
+				count={stationContext.station?.length || 0}
 				page={page}
 				rows={paginatedBarges}
 				rowsPerPage={rowsPerPage}
@@ -73,6 +83,6 @@ export default function Page(): JSX.Element {
 	);
 }
 
-function applyPagination(rows: Station[], page: number, rowsPerPage: number) {
+function applyPagination(rows: Station[], page: number, rowsPerPage: number): Station[] {
 	return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }

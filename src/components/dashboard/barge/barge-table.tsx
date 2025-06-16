@@ -1,13 +1,26 @@
 "use client";
 
-import { JSX, useMemo, ChangeEvent } from "react";
+import React, { useMemo } from "react";
+import type { ChangeEvent, JSX } from "react";
 import dayjs from "dayjs";
 import RouterLink from "next/link";
-import { Box, Typography, Link, Divider, Card, Checkbox } from "@mui/material";
-import { Table, TableHead, TableBody, TableRow, TableCell, TablePagination } from "@mui/material";
+import { 
+  Box, 
+  Typography, 
+  Link, 
+  Divider, 
+  Card, 
+  Checkbox,
+  Table, 
+  TableHead, 
+  TableBody, 
+  TableRow, 
+  TableCell, 
+  TablePagination 
+} from "@mui/material";
 
 import { useSelection } from "@/hooks/use-selection";
-import { Barge } from "@/types/barge";
+import type { Barge } from "@/types/barge";
 
 interface BargeTableProps {
   count: number;

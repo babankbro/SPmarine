@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import RouterLink from "next/link";
 import { usePathname } from "next/navigation";
 import { Drawer, Divider, Box, Stack, Typography } from "@mui/material"
@@ -62,7 +63,7 @@ export function MobileNav({ open, onClose }: MobileNavProps): React.JSX.Element 
 	);
 }
 
-function renderNavItems({ items = [], pathname }: { items?: NavItemConfig[]; pathname: string }): React.JSX.Element {
+function renderNavItems({ items = [], pathname }: { items?: NavItemConfig[]; pathname: string }): React.ReactElement {
 	const children = items.reduce((acc: React.ReactNode[], curr: NavItemConfig): React.ReactNode[] => {
 		const { key, ...item } = curr;
 
@@ -82,7 +83,7 @@ interface NavItemProps extends Omit<NavItemConfig, "items"> {
 	pathname: string;
 }
 
-function NavItem({ disabled, external, href, icon, matcher, pathname, title }: NavItemProps): React.JSX.Element {
+function NavItem({ disabled, external, href, icon, matcher, pathname, title }: NavItemProps): React.ReactElement {
 	const active = isNavItemActive({ disabled, external, href, matcher, pathname });
 	const Icon = icon ? navIcons[icon] : null;
 

@@ -1,29 +1,43 @@
 "use client";
 
-import * as React from "react";
-import dayjs from "dayjs";
-import { Box, Typography, Divider, Card, Checkbox } from "@mui/material";
-import { Table, TableHead, TableBody, TableRow, TableCell, TablePagination } from "@mui/material";
+import React, { useMemo } from "react";
+import type { ChangeEvent } from "react";
+import { 
+  Box, 
+  Typography, 
+  Divider, 
+  Card, 
+  Checkbox,
+  Table, 
+  TableHead, 
+  TableBody, 
+  TableRow, 
+  TableCell, 
+  TablePagination 
+} from "@mui/material";
 
 import { useSelection } from "@/hooks/use-selection";
-import { Carrier } from "@/types/carrier";
+import type { Carrier } from "@/types/carrier";
 
 interface CarrierTableProps {
   count: number;
   page: number;
   rows: Carrier[];
   rowsPerPage?: number;
+  onPageChange?: (event: unknown, newPage: number) => void;
+  onRowsPerPageChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function CarrierTable({ count, rows, page, rowsPerPage = 0 }: CarrierTableProps): React.JSX.Element {
-  const rowIds = React.useMemo(() => {
+export function CarrierTable({ count, rows, page, rowsPerPage = 0, onPageChange, onRowsPerPageChange }: CarrierTableProps): React.JSX.Element {
+  const rowIds = useMemo(() => {
     return rows.map((carrier) => carrier.id);
   }, [rows]);
 
   const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
 
-  const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
-  const selectedAll = rows.length > 0 && selected?.size === rows.length;
+  const selectedSize = selected?.size ?? 0;
+  const selectedSome = selectedSize > 0 && selectedSize < rows.length;
+  const selectedAll = rows.length > 0 && selectedSize === rows.length;
 
   return (
     <Card>
@@ -36,7 +50,7 @@ export function CarrierTable({ count, rows, page, rowsPerPage = 0 }: CarrierTabl
                   checked={selectedAll}
                   indeterminate={selectedSome}
                   onChange={(event) => {
-                    (event.target.checked) ? selectAll() : deselectAll();
+                    event.target.checked ? selectAll() : deselectAll();
                   }}
                 />
               </TableCell>
@@ -47,7 +61,7 @@ export function CarrierTable({ count, rows, page, rowsPerPage = 0 }: CarrierTabl
           </TableHead>
           <TableBody>
             {rows.map((row: Carrier) => {
-              const isSelected = selected?.has(row.id);
+              const isSelected = selected?.has(row.id) ?? false;
 
               return (
                 <TableRow hover key={row.id} selected={isSelected}>
@@ -55,7 +69,7 @@ export function CarrierTable({ count, rows, page, rowsPerPage = 0 }: CarrierTabl
                     <Checkbox
                       checked={isSelected}
                       onChange={(event) => {
-                        (event.target.checked) ? selectOne(row.id) : deselectOne(row.id);
+                        event.target.checked ? selectOne(row.id) : deselectOne(row.id);
                       }}
                     />
                   </TableCell>
@@ -74,8 +88,12 @@ export function CarrierTable({ count, rows, page, rowsPerPage = 0 }: CarrierTabl
       <TablePagination
         component="div"
         count={count}
-        onPageChange={() => {}}
-        onRowsPerPageChange={() => {}}
+        onPageChange={onPageChange ?? ((_, __) => {
+          // TODO: Implement proper pagination handling
+        })}
+        onRowsPerPageChange={onRowsPerPageChange ?? (() => {
+          // TODO: Implement proper rows per page handling
+        })}
         page={page}
         rowsPerPage={rowsPerPage}
         rowsPerPageOptions={[5, 10, 25]}

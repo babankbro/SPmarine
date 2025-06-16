@@ -1,13 +1,16 @@
 "use client";
 
-import * as React from "react";
-import Button from "@mui/material/Button";
-import Card from "@mui/material/Card";
-import CardActions from "@mui/material/CardActions";
-import CardContent from "@mui/material/CardContent";
-import CardHeader from "@mui/material/CardHeader";
-import Divider from "@mui/material/Divider";
-import { alpha, useTheme } from "@mui/material/styles";
+import React from "react";
+import {
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Divider,
+  alpha,
+  useTheme
+} from "@mui/material";
 import type { SxProps } from "@mui/material/styles";
 import { ArrowClockwise as ArrowClockwiseIcon } from "@phosphor-icons/react/dist/ssr/ArrowClockwise";
 import { ArrowRight as ArrowRightIcon } from "@phosphor-icons/react/dist/ssr/ArrowRight";
@@ -72,7 +75,7 @@ function useChartOptions(): ApexOptions {
 		},
 		yaxis: {
 			labels: {
-				formatter: (value) => (value > 0 ? `${value}K` : `${value}`),
+				formatter: (value: number): string => (value > 0 ? `${value}K` : `${value}`),
 				offsetX: -10,
 				style: { colors: theme.palette.text.secondary },
 			},

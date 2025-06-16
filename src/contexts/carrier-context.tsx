@@ -1,10 +1,12 @@
 "use client";
 
-import { createContext, ReactNode } from "react";
+import React from "react";
+import { createContext } from "react";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-import { Carrier } from "@/types/carrier";
+import type { Carrier } from "@/types/carrier";
 
 export interface CarrierContextType {
   carrier?: Carrier[];
@@ -12,19 +14,27 @@ export interface CarrierContextType {
   isLoading: boolean;
 }
 
-export interface CarrierProvidrProps {}
-
 export const CarrierContext = createContext<CarrierContextType>({ isLoading: true });
 
-export function CarrierProvider({ children }: { children: ReactNode }) {
+export function CarrierProvider({ children }: { children: ReactNode }): React.JSX.Element | null {
   const { data, isLoading } = useQuery<Carrier[]>({
     queryKey: ["carriers"],
-    queryFn: async () => {
-      return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/carriers`)).data;
+    queryFn: async (): Promise<Carrier[]> => {
+      const response = await axios.get<Carrier[]>(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/carriers`);
+      return response.data;
     },
   });
 
-  if (!data) return <></>
+  if (!data) return null;
 
-  return <CarrierContext.Provider value={{ carrier: data, isLoading: isLoading }}>{children}</CarrierContext.Provider>;
+  return (
+    <CarrierContext.Provider
+      value={{
+        carrier: data,
+        isLoading
+      }}
+    >
+      {children}
+    </CarrierContext.Provider>
+  );
 }

@@ -1,0 +1,8 @@
+# Node modules and build directories
+node_modules/
+.next/
+build/
+dist/
+
+# Specific problematic files
+src/types/order.d.ts

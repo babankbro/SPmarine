@@ -1,5 +1,5 @@
 
-export type Barge = {
+export interface Barge {
   id: string;
   name: string;
   weight: number;

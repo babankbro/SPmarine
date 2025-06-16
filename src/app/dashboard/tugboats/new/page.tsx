@@ -1,17 +1,48 @@
 "use client";
 
-import Grid from "@mui/material/Unstable_Grid2";
-import dayjs from "dayjs";
+import * as React from "react";
+import {
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  CardHeader,
+  Divider,
+  Grid,
+  Snackbar,
+  Alert,
+  TextField,
+} from "@mui/material";
 import axios from "axios";
-import { Button, Divider, FormControl, InputLabel, MenuItem, OutlinedInput, Select } from "@mui/material";
-import { Card, CardActions, CardContent, CardHeader } from "@mui/material";
-import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import dayjs from "dayjs";
+import type { ChangeEvent, FormEvent } from "react";
 
-import { Tugboat } from "@/types/tugboat";
-import { http } from "@/http";
+interface Tugboat {
+  id: string;
+  name: string;
+  maxCapacity: number;
+  maxBarge: number;
+  maxFuelCon: number;
+  type: string;
+  minSpeed: number;
+  maxSpeed: number;
+  engineRpm: number;
+  horsePower: number;
+  latitude: number;
+  longitude: number;
+  waterStatus: string;
+  distanceKm: number;
+  readyDatetime: string;
+}
 
-export default function Page() {
-  const [formData, setFormData] = useState<Tugboat>({
+export default function Page(): React.JSX.Element {
+  const router = useRouter();
+
+  const [notification, setNotification] = React.useState<{ message: string; severity: "success" | "error" } | null>(null);
+  const [openSnackbar, setOpenSnackbar] = React.useState(false);
+
+  const [formData, setFormData] = React.useState<Tugboat>({
     id: "",
     name: "",
     maxCapacity: 0,
@@ -29,247 +60,283 @@ export default function Page() {
     readyDatetime: dayjs().format("YYYY-MM-DDTHH:mm"),
   });
 
-  const handleChange = (e: any) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "maxCapacity" || name === "maxBarge" || name === "maxFuelCon" ||
-              name === "minSpeed" || name === "maxSpeed" || name === "engineRpm" ||
-              name === "horsePower" || name === "latitude" || name === "longitude" ||
-              name === "distanceKm"
-        ? Number(value)
-        : value,
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>): Promise<void> => {
+    event.preventDefault();
+    
+    try {
+      const response = await axios.post(
+        `${process.env.API_ENDPOINT}/${process.env.API_VERSION}/tugboats`,
+        formData
+      );
+      
+      if (response.status === 201) {
+        setNotification({ message: "Tugboat created successfully", severity: "success" });
+        setOpenSnackbar(true);
+        setTimeout(() => {
+          router.push("/dashboard/tugboats");
+        }, 1500);
+      } else {
+        setNotification({ message: "Failed to create tugboat. Please try again.", severity: "error" });
+        setOpenSnackbar(true);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setNotification({ message: `Failed to create tugboat: ${errorMessage}`, severity: "error" });
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ): void => {
+    setFormData((prevState) => ({
+      ...prevState,
+      [event.target.name]: event.target.type === "number" ? Number(event.target.value) : event.target.value,
     }));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleFlagChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ): void => {
+    setFormData((prevState) => ({
+      ...prevState,
+      type: event.target.value,
+    }));
+  };
 
-    try {
-      const res = await axios.post(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/tugboats`, formData)
-      if (res.status == 201) {
-        alert('success');
-        window.history.back();
-      }
-      else
-        alert('failed');
-    } catch (e) {
-      console.error("failed: ", e);
-    }
-  }
+  const handleWaterStatusChange = (
+    event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ): void => {
+    setFormData((prevState) => ({
+      ...prevState,
+      waterStatus: event.target.value,
+    }));
+  };
+
+  const handleSnackbarClose = (): void => {
+    setOpenSnackbar(false);
+  };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-    >
-      <Card>
-        <CardHeader subheader="The information can be edited" title="add tugboat" />
-        <Divider />
-        <CardContent>
-          <Grid container spacing={3}>
-            {/* Name */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Id</InputLabel>
-                <OutlinedInput
+    <div>
+      <form
+        onSubmit={handleSubmit}
+      >
+        <Card>
+          <CardHeader subheader="The information can be edited" title="Add Tugboat" />
+          <Divider />
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Id"
-                  value={formData.id}
-                  onChange={handleChange}
                   name="id"
+                  onChange={handleChange}
+                  required
+                  value={formData.id}
                 />
-              </FormControl>
-            </Grid>
+              </Grid>
 
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Name</InputLabel>
-                <OutlinedInput
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Name"
-                  value={formData.name}
-                  onChange={handleChange}
                   name="name"
+                  onChange={handleChange}
+                  required
+                  value={formData.name}
                 />
-              </FormControl>
-            </Grid>
+              </Grid>
 
-            {/* Max Capacity */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Max Capacity</InputLabel>
-                <OutlinedInput
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Max Capacity"
-                  value={formData.maxCapacity}
-                  onChange={handleChange}
                   name="maxCapacity"
+                  onChange={handleChange}
+                  required
+                  type="number"
+                  value={formData.maxCapacity}
                 />
-              </FormControl>
-            </Grid>
+              </Grid>
 
-            {/* Max Barge */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Max Barge</InputLabel>
-                <OutlinedInput
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Max Barge"
+                  name="maxBarge"
+                  onChange={handleChange}
+                  required
+                  type="number"
                   value={formData.maxBarge}
-                  onChange={handleChange}
-                  name="maxBarge" />
-              </FormControl>
-            </Grid>
+                />
+              </Grid>
 
-            {/* Max FuelCon */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Max FuelCon</InputLabel>
-                <OutlinedInput
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Max FuelCon"
+                  name="maxFuelCon"
+                  onChange={handleChange}
+                  required
+                  type="number"
                   value={formData.maxFuelCon}
-                  onChange={handleChange}
-                  name="maxFuelCon" />
-              </FormControl>
-            </Grid>
+                />
+              </Grid>
 
-            {/* Type */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Type</InputLabel>
-                <Select
-                  value={formData.type}
-                  onChange={handleChange}
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Type"
                   name="type"
-                  variant="outlined"
+                  onChange={handleFlagChange}
+                  required
+                  select
+                  SelectProps={{ native: true }}
+                  value={formData.type}
                 >
-                  <MenuItem value="SEA">SEA</MenuItem>
-                  <MenuItem value="RIVER">RIVER</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
+                  <option value="SEA">SEA</option>
+                  <option value="RIVER">RIVER</option>
+                </TextField>
+              </Grid>
 
-            {/* Water Status */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Water Status</InputLabel>
-                <Select
-                  value={formData.waterStatus}
+              <Grid container spacing={2}>
+                <Grid item md={6} xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Min Speed"
+                    name="minSpeed"
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    value={formData.minSpeed}
+                  />
+                </Grid>
+                <Grid item md={6} xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Max Speed"
+                    name="maxSpeed"
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    value={formData.maxSpeed}
+                  />
+                </Grid>
+              </Grid>
+
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
+                  label="Engine Rpm"
+                  name="engineRpm"
                   onChange={handleChange}
+                  required
+                  type="number"
+                  value={formData.engineRpm}
+                />
+              </Grid>
+
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
+                  label="Horse Power"
+                  name="horsePower"
+                  onChange={handleChange}
+                  required
+                  type="number"
+                  value={formData.horsePower}
+                />
+              </Grid>
+
+              <Grid container>
+                <Grid item md={6} xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Longitude"
+                    name="longitude"
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    value={formData.longitude}
+                  />
+                </Grid>
+                <Grid item md={6} xs={12}>
+                  <TextField
+                    fullWidth
+                    label="Latitude"
+                    name="latitude"
+                    onChange={handleChange}
+                    required
+                    type="number"
+                    value={formData.latitude}
+                  />
+                </Grid>
+              </Grid>
+
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
+                  label="Distance Km"
+                  name="distanceKm"
+                  onChange={handleChange}
+                  required
+                  type="number"
+                  value={formData.distanceKm}
+                />
+              </Grid>
+
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
+                  label="Ready DateTime"
+                  name="readyDatetime"
+                  onChange={handleChange}
+                  required
+                  type="datetime-local"
+                  value={formData.readyDatetime}
+                />
+              </Grid>
+
+              <Grid item md={6} xs={12}>
+                <TextField
+                  fullWidth
                   label="Water Status"
                   name="waterStatus"
-                  variant="outlined"
+                  onChange={handleWaterStatusChange}
+                  required
+                  select
+                  SelectProps={{ native: true }}
+                  value={formData.waterStatus}
                 >
-                  <MenuItem value="SEA">SEA</MenuItem>
-                  <MenuItem value="RIVER">RIVER</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {/* Min Speed & Min Speed */}
-            <Grid container spacing={2}>
-              <Grid md={6} xs={12}>
-                <FormControl fullWidth margin="normal" required>
-                  <InputLabel>Min Speed</InputLabel>
-                  <OutlinedInput
-                    label="Min Speed"
-                    value={formData.minSpeed}
-                    onChange={handleChange}
-                    name="minSpeed"
-                  />
-                </FormControl>
-              </Grid>
-              <Grid md={6} xs={12}>
-                <FormControl fullWidth margin="normal" required>
-                  <InputLabel>Max Speed</InputLabel>
-                  <OutlinedInput
-                    label="Max Speed"
-                    value={formData.maxSpeed}
-                    onChange={handleChange}
-                    name="maxSpeed"
-                  />
-                </FormControl>
+                  <option value="SEA">SEA</option>
+                  <option value="RIVER">RIVER</option>
+                </TextField>
               </Grid>
             </Grid>
-
-
-            {/* Engine Rpm */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Engine Rpm</InputLabel>
-                <OutlinedInput
-                  label="Engine Rpm"
-                  value={formData.engineRpm}
-                  onChange={handleChange}
-                  name="engineRpm" />
-              </FormControl>
-            </Grid>
-
-            {/* Horse Power */}
-            <Grid md={6} xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Horse Power</InputLabel>
-                <OutlinedInput
-                  label="Horse Power"
-                  value={formData.horsePower}
-                  onChange={handleChange}
-                  name="horsePower" />
-              </FormControl>
-            </Grid>
-
-            {/* Latitude & Longitude */}
-            <Grid container>
-              <Grid md={6} xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Longitude</InputLabel>
-                  <OutlinedInput
-                    label="Longitude"
-                    value={formData.longitude}
-                    onChange={handleChange}
-                    name="longitude" />
-                </FormControl>
-              </Grid>
-              <Grid md={6} xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel>Latitude</InputLabel>
-                  <OutlinedInput
-                    label="Latitude"
-                    value={formData.latitude}
-                    onChange={handleChange}
-                    name="latitude" />
-                </FormControl>
-              </Grid>
-            </Grid>
-
-            {/* DistanceKm */}
-            <Grid md={6} xs={12}>
-              <FormControl required>
-                <InputLabel>Distance Km</InputLabel>
-                <OutlinedInput
-                  label="Distance Km"
-                  value={formData.distanceKm}
-                  onChange={handleChange}
-                  name="distanceKm" />
-              </FormControl>
-            </Grid>
-
-            {/* ReadyDateTime	 */}
-            <Grid md={6} xs={12}>
-              <FormControl required>
-                <InputLabel>Ready DateTime</InputLabel>
-                <OutlinedInput
-                  label="Ready DateTime"
-                  type="datetime-local"
-                  value={formData.readyDatetime || ""}
-                  onChange={handleChange}
-                  name="readyDateTime" />
-              </FormControl>
-            </Grid>
-
-          </Grid>
-        </CardContent>
-        <Divider />
-        <CardActions sx={{ justifyContent: "flex-end" }}>
-          <Button variant="contained" type="submit">Add new</Button>
-        </CardActions>
-      </Card>
-    </form>
-  )
+          </CardContent>
+          <Divider />
+          <CardActions sx={{ justifyContent: "flex-end" }}>
+            <Button variant="contained" type="submit">Add new</Button>
+          </CardActions>
+        </Card>
+      </form>
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+      >
+        {notification ? (
+          <Alert 
+            onClose={handleSnackbarClose} 
+            severity={notification.severity} 
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        ) : undefined}
+      </Snackbar>
+    </div>
+  );
 }

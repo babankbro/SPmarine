@@ -1,5 +1,5 @@
 
-export type Carrier = {
+export interface Carrier {
   id: string;
   name: string;
   latitude: number;

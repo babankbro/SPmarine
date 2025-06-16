@@ -4,14 +4,14 @@ export const paths = {
 	dashboard: {
 		overview: "/dashboard",
 		customers: "/dashboard/customers",
-    carriers: "/dashboard/carriers",
-    barges: "/dashboard/barges",
+		carriers: "/dashboard/carriers",
+		barges: "/dashboard/barges",
 		tugboats: "/dashboard/tugboats",
-    stations: "/dashboard/stations",
-	costs: "/dashboard/costs"
-		// account: "/dashboard/account",
+		stations: "/dashboard/stations",
+		costs: "/dashboard/costs",
+	    account: "/dashboard/account",
 		// integrations: "/dashboard/integrations",
-		// settings: "/dashboard/settings",
+		 settings: "/dashboard/settings",
 	},
 	errors: { notFound: "/errors/not-found" },
 } as const;

@@ -1,10 +1,12 @@
 "use client";
 
-import { createContext, ReactNode } from "react";
+import React from "react";
+import { createContext } from "react";
+import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 
-import { Customer } from "@/types/customer";
+import type { Customer } from "@/types/customer";
 
 export interface CustomerContextType {
   customer?: Customer[];
@@ -12,19 +14,27 @@ export interface CustomerContextType {
   isLoading: boolean;
 }
 
-export interface CustomerProvidrProps {}
-
 export const CustomerContext = createContext<CustomerContextType>({ isLoading: true });
 
-export function CustomerProvider({ children }: { children: ReactNode }) {
+export function CustomerProvider({ children }: { children: ReactNode }): React.JSX.Element | null {
   const { data, isLoading } = useQuery<Customer[]>({
     queryKey: ["customers"],
-    queryFn: async () => {
-      return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/customers`)).data;
+    queryFn: async (): Promise<Customer[]> => {
+      const response = await axios.get<Customer[]>(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/customers`);
+      return response.data;
     },
   });
 
-  if (!data) return <></>
+  if (!data) return null;
 
-  return <CustomerContext.Provider value={{ customer: data, isLoading: isLoading }}>{children}</CustomerContext.Provider>;
+  return (
+    <CustomerContext.Provider
+      value={{
+        customer: data,
+        isLoading
+      }}
+    >
+      {children}
+    </CustomerContext.Provider>
+  );
 }

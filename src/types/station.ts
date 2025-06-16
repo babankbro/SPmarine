@@ -1,8 +1,8 @@
-export type Station = {
+export interface Station {
 	id: string;
   name: string;
   type: "SEA" | "RIVER";
   latitude: number;
   longitude: number;
   distanceKm: number;
-};
+}
