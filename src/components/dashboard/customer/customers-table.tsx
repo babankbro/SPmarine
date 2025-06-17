@@ -24,19 +24,20 @@ function noop(): void {
 
 export interface Customer {
 	id: string;
-	avatar: string;
+	avatar?: string;
 	name: string;
 	email: string;
-	address: { city: string; state: string; country: string; street: string };
-	phone: string;
-	createdAt: Date;
+	address: string;
+	// address: { city: string; state: string; country: string; street: string };
 }
 
 interface CustomersTableProps {
 	count?: number;
 	page?: number;
 	rows?: Customer[];
-	rowsPerPage?: number;
+	rowsPerPage: number;
+	onPageChange: (event: unknown, newPage: number) => void;
+	onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 function CustomeAvatar({ id }: { id: string }) {
@@ -52,6 +53,8 @@ export function CustomersTable({
 	rows = [],
 	page = 0,
 	rowsPerPage = 0,
+	onPageChange,
+	onRowsPerPageChange,
 }: CustomersTableProps): React.JSX.Element {
 	const rowIds = React.useMemo(() => {
 		return rows.map((customer) => customer.id);
@@ -83,9 +86,7 @@ export function CustomersTable({
 							</TableCell>
 							<TableCell>Name</TableCell>
 							<TableCell>Email</TableCell>
-							<TableCell>Location</TableCell>
-							<TableCell>Phone</TableCell>
-							<TableCell>Signed Up</TableCell>
+							<TableCell>Address</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
@@ -97,13 +98,7 @@ export function CustomersTable({
 									<TableCell padding="checkbox">
 										<Checkbox
 											checked={isSelected}
-											onChange={(event) => {
-												if (event.target.checked) {
-													selectOne(row.id);
-												} else {
-													deselectOne(row.id);
-												}
-											}}
+											onChange={(event) => (event.target.checked ? selectOne(row.id) : deselectOne(row.id))}
 										/>
 									</TableCell>
 									<TableCell>
@@ -114,11 +109,7 @@ export function CustomersTable({
 										</Stack>
 									</TableCell>
 									<TableCell>{row.email}</TableCell>
-									<TableCell>
-										{row.address.city}, {row.address.state}, {row.address.country}
-									</TableCell>
-									<TableCell>{row.phone}</TableCell>
-									<TableCell>{dayjs(row.createdAt).format("MMM D, YYYY")}</TableCell>
+									<TableCell>{row.address}</TableCell>
 								</TableRow>
 							);
 						})}
@@ -129,8 +120,8 @@ export function CustomersTable({
 			<TablePagination
 				component="div"
 				count={count}
-				onPageChange={noop}
-				onRowsPerPageChange={noop}
+				onPageChange={onPageChange}
+				onRowsPerPageChange={onRowsPerPageChange}
 				page={page}
 				rowsPerPage={rowsPerPage}
 				rowsPerPageOptions={[5, 10, 25]}
