@@ -25,7 +25,8 @@ export function OrderProvider({ children }: { children: ReactNode }) {
 	const { data, isLoading } = useQuery<Order[]>({
 		queryKey: ["orders"],
 		queryFn: async () => {
-			return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/orders`)).data;
+			// return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/orders`)).data;
+			return (await axios.get(`http://62.72.30.12:18001/v1/orders`)).data;
 		},
 	});
 

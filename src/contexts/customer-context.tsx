@@ -20,7 +20,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
 	const { data, isLoading } = useQuery<Customer[]>({
 		queryKey: ["customers"],
 		queryFn: async () => {
-			return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/customers`)).data;
+			// return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/customers`)).data;
+			return (await axios.get(`http://62.72.30.12:18001/v1/customers`)).data;
 		},
 	});
 

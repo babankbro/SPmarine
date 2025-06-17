@@ -20,7 +20,8 @@ export function CarrierProvider({ children }: { children: ReactNode }) {
 	const { data, isLoading } = useQuery<Carrier[]>({
 		queryKey: ["carriers"],
 		queryFn: async () => {
-			return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/carriers`)).data;
+			// return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/carriers`)).data;
+			return (await axios.get(`http://62.72.30.12:18001/v1/carriers`)).data;
 		},
 	});
 

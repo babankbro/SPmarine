@@ -20,7 +20,8 @@ export function StationProvider({ children }: { children: ReactNode }) {
 	const { data, isLoading } = useQuery<Station[]>({
 		queryKey: ["stations"],
 		queryFn: async () => {
-			return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/stations`)).data;
+			// return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/stations`)).data;
+			return (await axios.get(`http://62.72.30.12:18001/v1/stations`)).data;
 		},
 	});
 

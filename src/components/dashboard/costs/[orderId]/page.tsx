@@ -2,13 +2,12 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Typography, Box, Container, Paper, Grid, Button, CircularProgress, Card, CardContent } from "@mui/material";
+import { Typography, Box, Container, Grid, Button, CircularProgress, Card, CardContent } from "@mui/material";
 import { ArrowLeft as ArrowLeftIcon } from "@phosphor-icons/react";
 
 import { useCost } from "@/contexts/cost-context";
-import { useTugboat } from "@/contexts/tugboat-context";
-import { useOrder } from "@/contexts/order-context";
-// import { useTugboat } from "@/hooks/use-tugboat";
+// import { useOrder } from "@/contexts/order-context";
+import { useTugboat } from "@/hooks/use-tugboat";
 // import { useOrder } from "@/hooks/use-order";
 
 export default function CostDetailPage() {
@@ -19,12 +18,11 @@ export default function CostDetailPage() {
 
 	const { getByIds, isLoading } = useCost();
 	const { getById: getTugboat } = useTugboat();
-	const { getById: getOrder } = useOrder();
+	// const { getById: getOrder } = useOrder();
 
-	console.log(getTugboat);
 	const cost = getByIds(tugboatId, orderId);
-	// const tugboat = cost ? getTugboat(cost.tugboatId) : null;
-	// const order = cost ? getOrder(cost.orderId) : null;
+	const tugboat = cost ? getTugboat?.(cost.tugboatId) : null;
+	// const order = cost ? getOrder?.(cost.orderId) : null;
 
 	useEffect(() => {
 		document.title = cost ? `Cost Detail | Dashboard` : "Cost Detail | Dashboard";

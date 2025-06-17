@@ -103,9 +103,11 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 	const [totalFuelConsumption, setTotalFuelConsumption] = useState(0);
 	const [totalTime, setTotalTime] = useState(0);
 	const [totalWeight, setTotalWeight] = useState(0);
-	const tugboatList: Tugboat[] = useTugboat();
+	// const tugboatList: Tugboat[] = useTugboat();
+	const { tugboat: tugboatList } = useTugboat();
 	const orderList = useOrder();
 
+	if (!tugboatList) return <></>;
 	if (!costs) return <></>;
 
 	useEffect(() => {
@@ -195,7 +197,7 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 				<Autocomplete
 					multiple
 					id="tugboat-filter"
-					options={tugboatList?.length > 0 ? tugboatList.map((t) => t.id) : []}
+					options={tugboatList?.length > 0 ? tugboatList?.map((t) => t.id) : []}
 					noOptionsText="No tugboats available"
 					getOptionLabel={(tugboatId) => {
 						const tugboat = tugboatList?.find((t) => t.id === tugboatId);
@@ -217,7 +219,7 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 					renderTags={(selectedIds, getTagProps) =>
 						selectedIds.map((id, index) => {
 							const tugboat = tugboatList?.find((t) => t.id === id);
-							return <Chip label={tugboat?.name || id} {...getTagProps({ index })} color="primary" />;
+							return <Chip label={tugboat?.name || id} {...getTagProps({ index })} color="primary" key={index} />;
 						})
 					}
 				/>

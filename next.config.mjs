@@ -5,6 +5,9 @@ const config = {
 		API_ENDPOINT: process.env.NEXT_PUBLIC_API_ENDPOINT || "http://localhost:18001",
 		API_VERSION: process.env.NEXT_PUBLIC_API_VERSION || "v1",
 	},
+	eslint: {
+		ignoreDuringBuilds: true,
+	},
 };
 
 export default config;

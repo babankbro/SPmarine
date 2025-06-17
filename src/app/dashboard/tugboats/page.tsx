@@ -16,7 +16,9 @@ export default function Page(): JSX.Element {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(5);
 
-	const tugboat: Tugboat[] = useTugboat();
+	const { tugboat } = useTugboat();
+	if (!tugboat) return <></>;
+
 	const paginatedTugboats = applyPagination(tugboat, page, rowsPerPage);
 
 	const handleImport = () => {};
