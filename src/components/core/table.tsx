@@ -1,4 +1,3 @@
-
 export function Table() {
-  return <></>
+	return <></>;
 }

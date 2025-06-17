@@ -1,5 +1,8 @@
 import axios, { AxiosResponse } from "axios";
 
+export const API_ENDPOINT: string = process.env.API_ENDPOINT || "http://localhost:5000";
+export const API_VERSION: string = process.env.API_VERSION || "v1";
+
 export const API_BASE: string = `${API_ENDPOINT}/${API_VERSION}`;
 
 interface HTTP {

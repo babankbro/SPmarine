@@ -1,37 +1,38 @@
 "use client";
 
-import { JSX, useMemo, ChangeEvent } from "react";
-import dayjs from "dayjs";
 import RouterLink from "next/link";
+import { JSX, useMemo } from "react";
 import { Box, Typography, Link, Divider, Card, Checkbox } from "@mui/material";
 import { Table, TableHead, TableBody, TableRow, TableCell, TablePagination } from "@mui/material";
+import { ArrowRight as ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
+import { BoxArrowUp } from "@phosphor-icons/react/dist/ssr";
+import { BoxArrowDown } from "@phosphor-icons/react/dist/ssr";
 
 import { useSelection } from "@/hooks/use-selection";
-import { Barge } from "@/types/barge";
+import { Order } from "@/types/order";
 
-interface BargeTableProps {
+interface OrderTableProps {
 	count: number;
 	page: number;
-	rows: Barge[];
-	rowsPerPage?: number;
+	rows: Order[];
+	rowsPerPage: number;
 	onPageChange: (event: unknown, newPage: number) => void;
-	onRowsPerPageChange: (event: ChangeEvent<HTMLInputElement>) => void;
+	onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-export function BargeTable({
+export function OrderTable({
 	count,
-	rows,
 	page,
-	rowsPerPage = 0,
+	rows,
+	rowsPerPage,
 	onPageChange,
 	onRowsPerPageChange,
-}: BargeTableProps): JSX.Element {
+}: OrderTableProps): JSX.Element {
 	const rowIds = useMemo(() => {
 		return rows.map((customer) => customer.id);
 	}, [rows]);
 
 	const { selectAll, deselectAll, selectOne, deselectOne, selected } = useSelection(rowIds);
-
 	const selectedSome = (selected?.size ?? 0) > 0 && (selected?.size ?? 0) < rows.length;
 	const selectedAll = rows.length > 0 && selected?.size === rows.length;
 
@@ -50,14 +51,14 @@ export function BargeTable({
 									}}
 								/>
 							</TableCell>
-							<TableCell>Name</TableCell>
-							<TableCell>Water Status</TableCell>
-							<TableCell>Distance Km</TableCell>
-							<TableCell>Ready Date</TableCell>
+							<TableCell>Product</TableCell>
+							<TableCell>Dest</TableCell>
+							<TableCell>Demand</TableCell>
+							<TableCell>Type</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
-						{rows.map((row: Barge) => {
+						{rows.map((row) => {
 							const isSelected = selected?.has(row.id);
 
 							return (
@@ -71,15 +72,20 @@ export function BargeTable({
 										/>
 									</TableCell>
 									<TableCell>
-										<Box component={RouterLink} href={`barges/${row.id}`}>
+										<Box component={RouterLink} href={`tugboats/${row.id}`}>
 											<Link>
-												<Typography variant="subtitle2">{row.name}</Typography>
+												<Typography variant="subtitle2">{row.productName}</Typography>
 											</Link>
 										</Box>
 									</TableCell>
-									<TableCell>{row.waterStatus}</TableCell>
-									<TableCell>{row.distanceKm} KM</TableCell>
-									<TableCell>{dayjs(row.readyDatetime).format("MMM D, YYYY")}</TableCell>
+									<TableCell>
+										{row.fromPoint} <ArrowRightIcon size={12} /> {row.destPoint}
+									</TableCell>
+									<TableCell>{row.demand}</TableCell>
+									<TableCell>
+										{row.type}
+										{/* <BoxArrowUp /> */}
+									</TableCell>
 								</TableRow>
 							);
 						})}

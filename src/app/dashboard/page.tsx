@@ -22,12 +22,15 @@ import { useTugboat } from "@/hooks/use-tugboat";
 
 export default function Page(): React.JSX.Element {
 	const data = useOrder();
-  const tugboat = useTugboat();
+	// const tugboat = useTugboat();
+	const { tugboat } = useTugboat();
+
+	if (!tugboat) return <></>;
 
 	return (
 		<Grid container spacing={3}>
 			<Grid lg={3} sm={6} xs={12}>
-        <Tugboat sx={{ height: "100%" }} count={tugboat.length} />
+				<Tugboat sx={{ height: "100%" }} count={tugboat.length} />
 			</Grid>
 			<Grid lg={3} sm={6} xs={12}>
 				<TotalCustomers diff={16} trend="down" sx={{ height: "100%" }} value="1.6k" />

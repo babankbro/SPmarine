@@ -1,23 +1,21 @@
 "use client";
 
-import Button from "@mui/material/Button";
-import Stack from "@mui/material/Stack";
-import Typography from "@mui/material/Typography";
-import { ChangeEvent, JSX, useState } from "react";
+import RouterLink from "next/link";
+import { useState, ChangeEvent } from "react";
+import { Button, Stack, Typography } from "@mui/material";
 import { Download as DownloadIcon } from "@phosphor-icons/react/dist/ssr/Download";
 import { Plus as PlusIcon } from "@phosphor-icons/react/dist/ssr/Plus";
 import { Upload as UploadIcon } from "@phosphor-icons/react/dist/ssr/Upload";
 
-import { StationTable } from "@/components/dashboard/station/station-table";
-import { useStation } from "@/hooks/use-station";
-import { Station } from "@/types/station";
+import { Order } from "@/types/order";
+import { OrderTable } from "@/components/order/order-table";
+import { useOrder } from "@/hooks/use-order";
+import { paths } from "@/paths";
 
-export default function Page(): JSX.Element {
+export default function Page() {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(5);
-
-	const station: Station[] = useStation();
-	const paginatedBarges = applyPagination(station, page, rowsPerPage);
+	const orders: Order[] = useOrder();
 
 	const handleImport = () => {};
 
@@ -32,11 +30,13 @@ export default function Page(): JSX.Element {
 		setPage(0);
 	};
 
+	const paginated = ApplyPaginated(orders, page, rowsPerPage);
+
 	return (
 		<Stack spacing={3}>
 			<Stack direction="row" spacing={3}>
 				<Stack spacing={1} sx={{ flex: "1 1 auto" }}>
-					<Typography variant="h4">Stations</Typography>
+					<Typography variant="h4">Tugboats</Typography>
 					<Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
 						<Button
 							color="inherit"
@@ -55,16 +55,21 @@ export default function Page(): JSX.Element {
 					</Stack>
 				</Stack>
 				<div>
-					<Button startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />} variant="contained">
+					<Button
+						component={RouterLink}
+						href={`${paths.dashboard.tugboats}/new`}
+						startIcon={<PlusIcon fontSize="var(--icon-fontSize-md)" />}
+						variant="contained"
+					>
 						Add
 					</Button>
 				</div>
 			</Stack>
 			{/* <CustomersFilters /> */}
-			<StationTable
-				count={station.length}
+			<OrderTable
+				count={orders.length}
 				page={page}
-				rows={paginatedBarges}
+				rows={paginated}
 				rowsPerPage={rowsPerPage}
 				onPageChange={handlePageChange}
 				onRowsPerPageChange={handleRowsPerPageChange}
@@ -73,6 +78,6 @@ export default function Page(): JSX.Element {
 	);
 }
 
-function applyPagination(rows: Station[], page: number, rowsPerPage: number) {
+function ApplyPaginated(rows: Order[], page: number, rowsPerPage: number) {
 	return rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 }

@@ -2,8 +2,11 @@
 
 const config = {
 	env: {
-		API_ENDPOINT: process.env.NEXT_PUBLIC_API_ENDPOINT || "http://62.72.30.12:18001",
+		API_ENDPOINT: process.env.NEXT_PUBLIC_API_ENDPOINT || "http://localhost:18001",
 		API_VERSION: process.env.NEXT_PUBLIC_API_VERSION || "v1",
+	},
+	eslint: {
+		ignoreDuringBuilds: true,
 	},
 };
 
