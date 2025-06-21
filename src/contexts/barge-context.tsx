@@ -25,8 +25,8 @@ export function BargeProvider({ children }: { children: ReactNode }) {
 	const { data, isLoading } = useQuery<Barge[]>({
 		queryKey: ["barges"],
 		queryFn: async () => {
-			// return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`)).data;
-			return (await axios.get(`http://62.72.30.12:18001/v1/barges`)).data;
+			 return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`)).data;
+			//return (await axios.get(`http://62.72.30.12:18001/v1/barges`)).data;
 		},
 	});
 

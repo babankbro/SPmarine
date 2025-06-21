@@ -26,8 +26,9 @@ export function TugboatProvider({ children }: { children: ReactNode }) {
 	const { data, isLoading } = useQuery<Tugboat[]>({
 		queryKey: ["tugboats"],
 		queryFn: async () => {
-			// return (await http.get<Tugboat[]>("tugboats")).data;
-			return (await axios.get(`http://62.72.30.12:18001/v1/tugboats`)).data;
+			//return (await http.get<Tugboat[]>("tugboats")).data;
+			return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/tugboats`)).data;
+			//return (await axios.get(`http://62.72.30.12:18001/v1/tugboats`)).data;
 		},
 	});
 
