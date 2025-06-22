@@ -126,7 +126,8 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 		});
 
 		// Calculate total values
-		const calculatedTotalWeight = newFilteredCosts.reduce((sum, cost) => sum + cost.totalLoad, 0);
+		const calculatedTotalWeight =  newFilteredCosts.filter(cost => cost.tugboatId.toLowerCase().includes('tbr'))
+																					 .reduce((sum, cost) => sum + cost.totalLoad, 0);
 		const calculatedTotalDistance = newFilteredCosts.reduce((sum, cost) => sum + cost.distance, 0);
 		const calculatedTotalTime = newFilteredCosts.reduce((sum, cost) => sum + cost.time, 0);
 		const calculatedTotalFuelConsumption = newFilteredCosts.reduce(
@@ -201,7 +202,7 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 					noOptionsText="No tugboats available"
 					getOptionLabel={(tugboatId) => {
 						const tugboat = tugboatList?.find((t) => t.id === tugboatId);
-						return tugboatId;
+						return tugboat?.name + (tugboat ? ` (${tugboatId})` : "");
 					}}
 					value={selectedTugboats}
 					onChange={(_, newValue) => {
@@ -219,7 +220,8 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 					renderTags={(selectedIds, getTagProps) =>
 						selectedIds.map((id, index) => {
 							const tugboat = tugboatList?.find((t) => t.id === id);
-							return <Chip label={tugboat?.name || id} {...getTagProps({ index })} color="primary" key={index} />;
+							let label =  tugboat?.name + " (" + tugboat?.id + ")" || id;
+							return <Chip label={  label} {...getTagProps({ index })} color="primary" key={index} />;
 						})
 					}
 				/>
@@ -301,6 +303,13 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 									>
 										{/*<TableCell sx={{ fontWeight: "medium" }}>{tugboat?.name || cost.tugboatId}</TableCell>
 										 */}
+										<TableCell>
+											<Typography variant="body2" sx={{ fontWeight: 'medium' }}>
+												{cost.tugboatId}
+											</Typography>
+											<Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem', display: 'block' }}>
+												{tugboatList?.find((t) => t.id === cost.tugboatId)?.name || 'Unknown'}
+											</Typography></TableCell>
 										<TableCell>{cost.orderId}</TableCell>
 										<TableCell>{formatNumber(cost.totalLoad)}</TableCell>
 										<TableCell>{formatNumber(cost.distance)}</TableCell>
