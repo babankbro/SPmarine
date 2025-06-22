@@ -22,13 +22,15 @@ import {
   Plus as PlusIcon,
   MagnifyingGlass as SearchIcon,
   FunnelSimple as FilterIcon,
-  Download as ExportIcon
+  Download as ExportIcon,
+  Calendar as CalendarIcon  // Add this line
 } from "@phosphor-icons/react/dist/ssr";
 
 import { useOrderContext } from "@/contexts/order-context";
 import { OrderTable } from "@/components/order/order-table";
 import { OrderForm } from "@/components/order/order-form";
 import { Order } from "@/types/order";
+import { ScheduleOperationDialog } from "@/components/order/schedule-operation-dialog";
 
 interface FilterState {
   search: string;
@@ -41,6 +43,7 @@ interface FilterState {
 export default function OrdersPage() {
   const { data: orders, isLoading, isError, error, refetch } = useOrderContext();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false); // Add this line
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState<FilterState>({
@@ -215,7 +218,7 @@ export default function OrdersPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={3} sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h4" gutterBottom>
-            Orders Management
+            Order Management
           </Typography>
           <Stack direction="row" spacing={2}>
             <Chip 
@@ -226,6 +229,44 @@ export default function OrdersPage() {
            
           </Stack>
         </Box>
+
+		{/* Center - Operate Schedule Button */}
+		<Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+			<Button
+			startIcon={<CalendarIcon size={20} />}
+			variant="outlined"
+			color="secondary"
+      backgroundColor="warning"
+			size="large"
+			onClick={() => {
+				// Handle operate schedule action
+				console.log('Operate Schedule clicked');
+        setScheduleDialogOpen(true);
+				// You can add your schedule operation logic here
+			}}
+			disabled={isLoading}
+			sx={{
+				borderRadius: 2,
+				px: 4,
+				py: 1.5,
+				fontSize: '1rem',
+				fontWeight: 600,
+				textTransform: 'none',
+				boxShadow: 1,
+        backgroundColor: '#ff9800', // Orange background
+        color: 'white',             // White text for contrast
+				'&:hover': {
+				boxShadow: 2,
+				transform: 'translateY(-1px)',
+         color: '#ff9800',  
+				},
+				transition: 'all 0.2s ease-in-out',
+			}}
+			>
+			Operate Schedule
+			</Button>
+		</Box>
+
         
         <Stack direction="row" spacing={2}>
           <Button
@@ -352,6 +393,12 @@ export default function OrdersPage() {
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         mode="create"
+      />
+
+      {/* Schedule Operation Dialog - Add this */}
+      <ScheduleOperationDialog
+        open={scheduleDialogOpen}
+        onClose={() => setScheduleDialogOpen(false)}
       />
     </Box>
   );
