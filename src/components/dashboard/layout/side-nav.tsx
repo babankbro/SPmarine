@@ -7,6 +7,7 @@ import Box from "@mui/material/Box";
 import Divider from "@mui/material/Divider";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
+import Collapse from "@mui/material/Collapse";
 
 import type { NavItemConfig } from "@/types/nav";
 import { navItems } from "@/components/dashboard/layout/config";
@@ -75,25 +76,61 @@ function renderNavItems({ items = [], pathname }: { items?: NavItemConfig[]; pat
 	);
 }
 
-interface NavItemProps extends Omit<NavItemConfig, "items"> {
+interface NavItemProps extends Omit<NavItemConfig, "key"> {
 	pathname: string;
+	level?: number;
 }
 
-function NavItem({ disabled, external, href, icon, matcher, pathname, title }: NavItemProps): React.JSX.Element {
-	const active = isNavItemActive({ disabled, external, href, matcher, pathname });
+function NavItem({ 
+	disabled, 
+	external, 
+	href, 
+	icon, 
+	matcher, 
+	pathname, 
+	title, 
+	items,
+	level = 0 
+}: NavItemProps): React.JSX.Element {
+	const [expanded, setExpanded] = React.useState(false);
+	const hasSubItems = items && items.length > 0;
+	
+	// Check if any child item is active
+	const isChildActive = hasSubItems && items.some(item => 
+		item.href && (pathname === item.href || pathname.startsWith(item.href))
+	);
+	
+	const active = isNavItemActive({ disabled, external, href, matcher, pathname }) || isChildActive;
 	const Icon = icon ? navIcons[icon] : null;
+	
+	// Auto-expand if child is active
+	React.useEffect(() => {
+		if (isChildActive) {
+			setExpanded(true);
+		}
+	}, [isChildActive]);
+
+	const handleToggle = () => {
+		if (hasSubItems) {
+			setExpanded(!expanded);
+		}
+	};
 
 	return (
 		<li>
 			<Box
-				{...(href
+				{...(href && !hasSubItems
 					? {
 							component: external ? "a" : RouterLink,
 							href,
 							target: external ? "_blank" : undefined,
 							rel: external ? "noreferrer" : undefined,
 						}
-					: { role: "button" })}
+					: { 
+							role: "button", 
+							onClick: handleToggle,
+							component: "div"
+						})}
 				sx={{
 					alignItems: "center",
 					borderRadius: 1,
@@ -103,6 +140,7 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title }: N
 					flex: "0 0 auto",
 					gap: 1,
 					p: "6px 16px",
+					pl: `${16 + level * 20}px`, // Indent based on level
 					position: "relative",
 					textDecoration: "none",
 					whiteSpace: "nowrap",
@@ -111,7 +149,15 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title }: N
 						color: "var(--NavItem-disabled-color)",
 						cursor: "not-allowed",
 					}),
-					...(active && { bgcolor: "var(--NavItem-active-background)", color: "var(--NavItem-active-color)" }),
+					...(active && { 
+						bgcolor: "var(--NavItem-active-background)", 
+						color: "var(--NavItem-active-color)" 
+					}),
+					"&:hover": {
+						bgcolor: active 
+							? "var(--NavItem-active-background)" 
+							: "var(--NavItem-hover-background)",
+					},
 				}}
 			>
 				<Box sx={{ alignItems: "center", display: "flex", justifyContent: "center", flex: "0 0 auto" }}>
@@ -131,7 +177,54 @@ function NavItem({ disabled, external, href, icon, matcher, pathname, title }: N
 						{title}
 					</Typography>
 				</Box>
+				{hasSubItems && (
+					<Box 
+						sx={{ 
+							alignItems: "center", 
+							display: "flex", 
+							justifyContent: "center",
+							transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
+							transition: "transform 0.2s ease-in-out"
+						}}
+					>
+						<Typography
+							sx={{ 
+								fontSize: "0.75rem",
+								color: active ? "var(--NavItem-icon-active-color)" : "var(--NavItem-icon-color)",
+								fontWeight: "bold"
+							}}
+						>
+							▶
+						</Typography>
+					</Box>
+				)}
 			</Box>
+			
+			{/* Render subitems */}
+			{hasSubItems && (
+				<Collapse in={expanded} timeout="auto" unmountOnExit>
+					<Box 
+						component="ul" 
+						sx={{ 
+							listStyle: "none", 
+							m: 0, 
+							p: 0,
+							bgcolor: "rgba(255, 255, 255, 0.02)",
+							borderLeft: "2px solid var(--mui-palette-neutral-700)",
+							ml: 2
+						}}
+					>
+						{items.map((subItem) => (
+							<NavItem
+								key={subItem.key}
+								pathname={pathname}
+								level={level + 1}
+								{...subItem}
+							/>
+						))}
+					</Box>
+				</Collapse>
+			)}
 		</li>
 	);
 }
