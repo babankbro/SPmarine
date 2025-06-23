@@ -8,10 +8,15 @@ import { User as UserIcon } from "@phosphor-icons/react/dist/ssr/User";
 import { Users as UsersIcon } from "@phosphor-icons/react/dist/ssr/Users";
 import { XSquare } from "@phosphor-icons/react/dist/ssr/XSquare";
 import { CurrencyCircleDollar as MoneyIcon } from "@phosphor-icons/react/dist/ssr/CurrencyCircleDollar";
-
+import { ChartBar as ChartBarIcon } from "@phosphor-icons/react/dist/ssr/ChartBar";
+import { CalendarDot as CalendarDotIcon } from "@phosphor-icons/react/dist/ssr/CalendarDot";
+import { Newspaper as NewspaperIcon } from "@phosphor-icons/react/dist/ssr/Newspaper";
 
 export const navIcons = {
 	"chart-pie": ChartPieIcon,
+	"chart-bar": ChartBarIcon,
+	"calendar-dots": CalendarDotIcon,
+	"newspaper": NewspaperIcon,
 	"gear-six": GearSixIcon,
 	"plugs-connected": PlugsConnectedIcon,
 	"x-square": XSquare,

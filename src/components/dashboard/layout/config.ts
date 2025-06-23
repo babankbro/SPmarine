@@ -9,4 +9,6 @@ export const navItems = [
 	{ key: "tugboats", title: "Tugboat", href: paths.dashboard.tugboats, icon: "boat" },
 	{ key: "stations", title: "Stations", href: paths.dashboard.stations, icon: "garage" },
 	{ key: "costs", title: "Costs", href: paths.dashboard.costs, icon: "money" },
+	{ key: "tugboat-schedule-result", title: "Tugboat Schedule Result", href: paths.dashboard.tugboatScheduleResult, icon: "newspaper" },
+	{ key: "tugboat-schedule-timeline", title: "Tugboat Schedule Timeline", href: paths.dashboard.tugboatScheduleTimeline, icon: "calendar-dots" },
 ] satisfies NavItemConfig[];

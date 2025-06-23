@@ -9,9 +9,11 @@ export const paths = {
 		tugboats: "/dashboard/tugboats",
 		stations: "/dashboard/stations",
 		costs: "/dashboard/costs",
-	    account: "/dashboard/account",
+		account: "/dashboard/account",
 		// integrations: "/dashboard/integrations",
-		 settings: "/dashboard/settings",
+		settings: "/dashboard/settings",
+		tugboatScheduleResult: "/dashboard/tugboat-schedule-result",
+		tugboatScheduleTimeline: "/dashboard/tugboat-schedule-timeline",
 	},
 	errors: { notFound: "/errors/not-found" },
 } as const;
