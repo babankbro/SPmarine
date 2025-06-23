@@ -1,12 +1,15 @@
+// src/hooks/use-customer.ts
 "use client";
 
 import { useContext } from "react";
+import { CustomerContext, CustomerContextType } from "@/contexts/customer-context";
 
-import { CustomerContext } from "@/contexts/customer-context";
+export function useCustomer(): CustomerContextType {
+  const context = useContext(CustomerContext);
 
-export function useCustomer() {
-	const context = useContext(CustomerContext);
-	if (!context) throw new Error("");
+  if (context === undefined) {
+    throw new Error("useCustomer must be used within a CustomerProvider");
+  }
 
-	return context;
+  return context;
 }
