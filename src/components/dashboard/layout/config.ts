@@ -22,9 +22,8 @@ export const navItems = [
 		icon: "money",
 		items: [
 			{ key: "tugboat_consumption", title: "Tugboat Consumption", href: paths.dashboard.costs, icon: "money" },
-			{ key: "tugboat_schedule", title: "Tugboat Schedule", href: paths.dashboard.costs, icon: "boat" },
-			{ key: "barge_usage", title: "Barge Usage", href: paths.dashboard.costs, icon: "boat" },
-			{ key: "grants", title: "Tugboat Grant", href: paths.dashboard.costs, icon: "boat" },
+			{ key: "tugboat-schedule-result", title: "Tugboat Schedule Result", href: paths.dashboard.tugboatScheduleResult, icon: "newspaper" },
+	       { key: "tugboat-schedule-timeline", title: "Tugboat Schedule Timeline", href: paths.dashboard.tugboatScheduleTimeline, icon: "calendar-dots" },
 		]
 	}
 ] satisfies NavItemConfig[];

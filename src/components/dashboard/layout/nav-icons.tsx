@@ -10,11 +10,19 @@ import { XSquare } from "@phosphor-icons/react/dist/ssr/XSquare";
 import { CurrencyCircleDollar as MoneyIcon } from "@phosphor-icons/react/dist/ssr/CurrencyCircleDollar";
 import { Clipboard as OrderIcon } from "@phosphor-icons/react/dist/ssr";
 
+import { ChartBar as ChartBarIcon } from "@phosphor-icons/react/dist/ssr/ChartBar";
+import { CalendarDot as CalendarDotIcon } from "@phosphor-icons/react/dist/ssr/CalendarDot";
+import { Newspaper as NewspaperIcon } from "@phosphor-icons/react/dist/ssr/Newspaper";
+
+
 export const navIcons = {
 	"chart-pie": ChartPieIcon,
 	"gear-six": GearSixIcon,
 	"plugs-connected": PlugsConnectedIcon,
 	"x-square": XSquare,
+	"chart-bar": ChartBarIcon,
+	"calendar-dots": CalendarDotIcon,
+	"newspaper": NewspaperIcon,
 	user: UserIcon,
 	boat: BoatIcon,
 	users: UsersIcon,

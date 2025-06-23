@@ -9,7 +9,14 @@ export const paths = {
 		tugboats: "/dashboard/tugboats",
 		stations: "/dashboard/stations",
 		costs: "/dashboard/costs",
+			account: "/dashboard/account",
+		// integrations: "/dashboard/integrations",
+		 settings: "/dashboard/settings",
+
+		tugboatScheduleResult: "/dashboard/tugboat-schedule-result",
+		tugboatScheduleTimeline: "/dashboard/tugboat-schedule-timeline",
 	},
 	order: "/orders",
 	errors: { notFound: "/errors/not-found" },
+
 } as const;
