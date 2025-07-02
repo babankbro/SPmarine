@@ -1,58 +1,323 @@
+// src/contexts/barge-context.tsx
 "use client";
 
-import { createContext, ReactNode, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createContext, ReactNode, useState, useContext, useCallback } from "react";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import axios from "axios";
+import { Barge, CreateBargeRequest, UpdateBargeRequest } from "@/types/barge";
+import { Station } from "@/types/station";
 
-import { Barge } from "@/types/barge";
+// API Configuration
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18001';
+const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
+const BARGES_ENDPOINT = `${API_BASE}/${API_VERSION}/barges`;
+const STATIONS_ENDPOINT = `${API_BASE}/${API_VERSION}/stations`;
 
 export interface BargeContextType {
-	barge?: Barge[];
-	isError?: unknown;
-	isLoading: boolean;
-	selectedBarge?: Barge;
-	getById?: (id: string) => Promise<void>;
+  // Data
+  data: Barge[];
+  stations: Station[];
+  isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
+  selected?: Barge;
+  
+  // CRUD Operations
+  getBargeById: (id: string) => Promise<Barge | null>;
+  createBarge: (barge: CreateBargeRequest) => Promise<Barge>;
+  updateBarge: (id: string, barge: UpdateBargeRequest) => Promise<Barge>;
+  deleteBarge: (id: string) => Promise<void>;
+  checkBargeExists: (id: string) => Promise<boolean>;
+  
+  // Station Management
+  assignStationToBarge: (bargeId: string, stationId: string) => Promise<Barge>;
+  removeStationFromBarge: (bargeId: string) => Promise<Barge>;
+  
+  // UI State Management
+  setSelected: (barge: Barge | undefined) => void;
+  refetch: () => Promise<void>;
+  refreshData: () => void;
+  
+  // Form helpers
+  isCreating: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
 }
 
-export interface BargeProvidrProps {}
-
-export const BargeContext = createContext<BargeContextType>({ isLoading: true });
+export const BargeContext = createContext<BargeContextType | undefined>(undefined);
 
 export function BargeProvider({ children }: { children: ReactNode }) {
-	const [selectedBarge, setSelectedTugboat] = useState<Barge>();
-	const queryClient = useQueryClient();
+  const [selected, setSelected] = useState<Barge>();
+  const queryClient = useQueryClient();
+  const [shouldRefresh, setShouldRefresh] = useState(0);
 
-	const { data, isLoading } = useQuery<Barge[]>({
-		queryKey: ["barges"],
-		queryFn: async () => {
-			 return (await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges`)).data;
-			//return (await axios.get(`http://62.72.30.12:18001/v1/barges`)).data;
-		},
-	});
+  const refreshData = useCallback(() => {
+    setShouldRefresh(prev => prev + 1);
+  }, []);
 
-	const getById = async (id: string) => {
-		const cached = queryClient.getQueryData<Barge[]>(["barges"])?.find((t) => t.id === id);
-		if (cached) {
-			setSelectedTugboat(cached);
-			return;
-		}
+  // Fetch Barges
+  const { 
+    data = [], 
+    isLoading: isLoadingBarges, 
+    error: bargesError,
+    refetch: refetchBarges 
+  } = useQuery<Barge[]>({
+    queryKey: ["barges", shouldRefresh],
+    queryFn: async () => {
+      const response = await axios.get(BARGES_ENDPOINT);
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+    retry: 3,
+  });
 
-		const res = await axios.get(`${process.env.API_ENDPOINT}/${process.env.API_VERSION}/barges/${id}`);
-		setSelectedTugboat(res.data);
-	};
+  // Fetch Stations (for dropdowns and associations)
+  const { 
+    data: stations = [], 
+    isLoading: isLoadingStations 
+  } = useQuery<Station[]>({
+    queryKey: ["stations"],
+    queryFn: async () => {
+      const response = await axios.get(STATIONS_ENDPOINT);
+      return response.data;
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - stations change less frequently
+  });
 
-	if (!data) return <></>;
+  // Create Barge Mutation
+  const createMutation = useMutation({
+    mutationFn: async (bargeData: CreateBargeRequest): Promise<Barge> => {
+      console.log('Creating barge with data:', bargeData);
+      
+      const response = await axios.post(BARGES_ENDPOINT, bargeData);
+      return response.data.data || response.data;
+    },
+    onSuccess: (newBarge) => {
+      queryClient.setQueryData<Barge[]>(["barges", shouldRefresh], (oldData) => {
+        return oldData ? [...oldData, newBarge] : [newBarge];
+      });
+      refetchBarges();
+    },
+    onError: (error) => {
+      console.error('Failed to create barge:', error);
+    },
+  });
 
-	return (
-		<BargeContext.Provider
-			value={{
-				barge: data,
-				isLoading: isLoading,
-				getById: getById,
-				selectedBarge: selectedBarge,
-			}}
-		>
-			{children}
-		</BargeContext.Provider>
-	);
+  // Update Barge Mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, bargeData }: { id: string; bargeData: UpdateBargeRequest }): Promise<Barge> => {
+      console.log('Updating barge with data:', bargeData);
+      const response = await axios.put(`${BARGES_ENDPOINT}/${id}`, bargeData);
+      return response.data.data || response.data;
+    },
+    onSuccess: (updatedBarge) => {
+      // Update cache
+      queryClient.setQueryData<Barge[]>(["barges", shouldRefresh], (oldData) => {
+        if (oldData) {
+          return oldData.map(barge => 
+            barge.id === updatedBarge.id ? updatedBarge : barge
+          );
+        }
+        return oldData;
+      });
+
+      // Invalidate queries to trigger fresh data fetch
+      queryClient.invalidateQueries({ queryKey: ["barges"] });
+      
+      // Update selected if it's the same barge
+      if (selected?.id === updatedBarge.id) {
+        setSelected(updatedBarge);
+      }
+    },
+    onError: (error) => {
+      console.error('Failed to update barge:', error);
+    },
+  });
+
+  // Delete Barge Mutation
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      await axios.delete(`${BARGES_ENDPOINT}/${id}`);
+    },
+    onSuccess: (_, deletedId) => {
+      // Remove from cache
+      queryClient.setQueryData<Barge[]>(["barges", shouldRefresh], (oldData) => {
+        return oldData ? oldData.filter(barge => barge.id !== deletedId) : [];
+      });
+      
+      // Clear selected if it was the deleted barge
+      if (selected?.id === deletedId) {
+        setSelected(undefined);
+      }
+      
+      // Refetch for consistency
+      refetchBarges();
+    },
+    onError: (error) => {
+      console.error('Failed to delete barge:', error);
+      // Refetch to restore correct state
+      refetchBarges();
+    },
+  });
+
+  // Station Management Mutations
+  const assignStationMutation = useMutation({
+    mutationFn: async ({ bargeId, stationId }: { bargeId: string; stationId: string }): Promise<Barge> => {
+      const response = await axios.post(`${BARGES_ENDPOINT}/${bargeId}/stations`, { stationId });
+      return response.data.data || response.data;
+    },
+    onSuccess: (updatedBarge) => {
+      // Update cache
+      queryClient.setQueryData<Barge[]>(["barges", shouldRefresh], (oldData) => {
+        if (oldData) {
+          return oldData.map(barge => 
+            barge.id === updatedBarge.id ? updatedBarge : barge
+          );
+        }
+        return oldData;
+      });
+      
+      // Update selected if it's the same barge
+      if (selected?.id === updatedBarge.id) {
+        setSelected(updatedBarge);
+      }
+    },
+  });
+
+  const removeStationMutation = useMutation({
+    mutationFn: async (bargeId: string): Promise<Barge> => {
+      const response = await axios.delete(`${BARGES_ENDPOINT}/${bargeId}/stations`);
+      return response.data.data || response.data;
+    },
+    onSuccess: (updatedBarge) => {
+      // Update cache
+      queryClient.setQueryData<Barge[]>(["barges", shouldRefresh], (oldData) => {
+        if (oldData) {
+          return oldData.map(barge => 
+            barge.id === updatedBarge.id ? updatedBarge : barge
+          );
+        }
+        return oldData;
+      });
+      
+      // Update selected if it's the same barge
+      if (selected?.id === updatedBarge.id) {
+        setSelected(updatedBarge);
+      }
+    },
+  });
+
+  // CRUD Functions
+  const getBargeById = async (id: string): Promise<Barge | null> => {
+    try {
+      // First check cache
+      const cached = queryClient.getQueryData<Barge[]>(["barges", shouldRefresh])?.find((barge) => barge.id === id);
+      if (cached) {
+        setSelected(cached);
+        return cached;
+      }
+
+      // If not in cache, fetch from API
+      const response = await axios.get(`${BARGES_ENDPOINT}/${id}`);
+      const barge = response.data;
+      setSelected(barge);
+      
+      // Update cache
+      queryClient.setQueryData<Barge[]>(["barges", shouldRefresh], (oldData) => {
+        if (oldData) {
+          const existingIndex = oldData.findIndex(b => b.id === id);
+          if (existingIndex >= 0) {
+            const newData = [...oldData];
+            newData[existingIndex] = barge;
+            return newData;
+          } else {
+            return [...oldData, barge];
+          }
+        }
+        return [barge];
+      });
+      
+      return barge;
+    } catch (error) {
+      console.error(`Failed to get barge ${id}:`, error);
+      return null;
+    }
+  };
+
+  const checkBargeExists = async (id: string): Promise<boolean> => {
+    try {
+      const response = await axios.get(`${BARGES_ENDPOINT}/${id}`);
+      return !!response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        return false;
+      }
+      throw error;
+    }
+  };
+
+  const createBarge = async (bargeData: CreateBargeRequest): Promise<Barge> => {
+    return createMutation.mutateAsync(bargeData);
+  };
+
+  const updateBarge = async (id: string, bargeData: UpdateBargeRequest): Promise<Barge> => {
+    return updateMutation.mutateAsync({ id, bargeData });
+  };
+
+  const deleteBarge = async (id: string): Promise<void> => {
+    return deleteMutation.mutateAsync(id);
+  };
+
+  const assignStationToBarge = async (bargeId: string, stationId: string): Promise<Barge> => {
+    return assignStationMutation.mutateAsync({ bargeId, stationId });
+  };
+
+  const removeStationFromBarge = async (bargeId: string): Promise<Barge> => {
+    return removeStationMutation.mutateAsync(bargeId);
+  };
+
+  const refetch = async (): Promise<void> => {
+    await refetchBarges();
+  };
+
+  // Context value
+  const contextValue: BargeContextType = {
+    data,
+    stations,
+    isLoading: isLoadingBarges || isLoadingStations,
+    isError: !!bargesError,
+    error: bargesError as Error | null,
+    selected,
+    setSelected,
+    getBargeById,
+    createBarge,
+    updateBarge,
+    deleteBarge,
+    checkBargeExists,
+    assignStationToBarge,
+    removeStationFromBarge,
+    refetch,
+    refreshData,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending,
+  };
+
+  return (
+    <BargeContext.Provider value={contextValue}>
+      {children}
+    </BargeContext.Provider>
+  );
+}
+
+// Custom hook to use BargeContext
+export function useBargeContext(): BargeContextType {
+  const context = useContext(BargeContext);
+  
+  if (context === undefined) {
+    throw new Error('useBargeContext must be used within a BargeProvider');
+  }
+  
+  return context;
 }
