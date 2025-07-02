@@ -66,16 +66,16 @@ export default function CustomersPage() {
         customer.email.toLowerCase().includes(searchLower) ||
         customer.address.toLowerCase().includes(searchLower) ||
         customer.id.toLowerCase().includes(searchLower) ||
-        customer.stations?.some(station => 
-          station.name.toLowerCase().includes(searchLower)
-        )
+        customer.station?.name.toLowerCase().includes(searchLower) ||
+        customer.station?.id.toLowerCase().includes(searchLower)
       );
     }
 
     // Station type filter
     if (filters.stationType) {
       filtered = filtered.filter(customer => 
-        customer.stations?.some(station => station.type === filters.stationType)
+        customer.station?.name.toLowerCase().includes(filters.stationType.toLowerCase()) ||
+        customer.station?.id.toLowerCase() === filters.stationType.toLowerCase()
       );
     }
 
@@ -86,8 +86,8 @@ export default function CustomersPage() {
 
       // Handle special sorting cases
       if (filters.sortBy === 'stationCount') {
-        aValue = a.stations?.length || 0;
-        bValue = b.stations?.length || 0;
+        aValue = a.station? 1 : 0;
+        bValue = b.station? 1 : 0;
       } else if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
@@ -122,12 +122,12 @@ export default function CustomersPage() {
     };
 
     customers.forEach(customer => {
-      if (customer.stations && customer.stations.length > 0) {
+      if (customer.station ) {
         counts.withStations++;
-        if (customer.stations.some(s => s.type === 'SEA')) {
+        if (customer.station.type === 'SEA') {
           counts.seaStations++;
         }
-        if (customer.stations.some(s => s.type === 'RIVER')) {
+        if (customer.station.type === 'RIVER') {
           counts.riverStations++;
         }
       } else {

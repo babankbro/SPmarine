@@ -223,34 +223,34 @@ export default function CustomerDetailsPage() {
               </Stack>
               <Divider sx={{ mb: 2 }} />
               
-              {customer.stations && customer.stations.length > 0 ? (
+              {customer.station ? (
                 <Stack spacing={1}>
-                  {customer.stations.map((station) => (
-                    <Card key={station.id} variant="outlined" sx={{ p: 2 }}>
+      
+                    <Card key={customer.station.id} variant="outlined" sx={{ p: 2 }}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Box>
                           <Typography variant="subtitle2" fontWeight="medium">
-                            {station.name}
+                            {customer.station.name}
                           </Typography>
                           <Typography variant="body2" color="text.secondary">
-                            ID: {station.id} • Type: {station.type}
+                            ID: {customer.station.id} • Type: {customer.station.type}
                           </Typography>
-                          {station.latitude && station.longitude && (
+                          {customer.station.latitude && customer.station.longitude && (
                             <Typography variant="caption" color="text.secondary">
-                              Location: {station.latitude.toFixed(4)}, {station.longitude.toFixed(4)}
+                              Location: {customer.station.latitude.toFixed(4)}, {customer.station.longitude.toFixed(4)}
                             </Typography>
                           )}
                         </Box>
                         <Chip 
-                          label={station.type} 
-                          color={station.type === 'SEA' ? 'primary' : 'secondary'}
+                          label={customer.station.type} 
+                          color={customer.station.type === 'SEA' ? 'primary' : 'secondary'}
                           size="small"
                         />
                       </Stack>
                     </Card>
-                  ))}
                 </Stack>
-              ) : (
+              )
+              : (
                 <Alert severity="info">
                   No stations associated with this customer
                 </Alert>
@@ -272,7 +272,7 @@ export default function CustomerDetailsPage() {
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="primary">
-                      {customer.stations?.length || 0}
+                      {customer.station?.id || 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Associated Stations
@@ -283,7 +283,7 @@ export default function CustomerDetailsPage() {
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="secondary">
-                      {customer.stations?.filter(s => s.type === 'SEA').length || 0}
+                      {customer.station?.type === 'SEA' ? 1 : 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       Sea Stations
@@ -294,7 +294,7 @@ export default function CustomerDetailsPage() {
                 <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="success.main">
-                      {customer.stations?.filter(s => s.type === 'RIVER').length || 0}
+                      {customer.station?.type === 'RIVER' ? 1 : 0}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
                       River Stations

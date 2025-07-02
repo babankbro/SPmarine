@@ -142,19 +142,11 @@ export function CustomersTable({
           <Table sx={{ minWidth: "800px" }}>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectedAll}
-                    indeterminate={selectedSome}
-                    onChange={(event) => {
-                      event.target.checked ? selectAll() : deselectAll();
-                    }}
-                  />
-                </TableCell>
+                
                 <TableCell>Customer</TableCell>
                 <TableCell>Contact</TableCell>
                 <TableCell>Address</TableCell>
-                <TableCell>Stations</TableCell>
+                <TableCell>Station</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
@@ -164,14 +156,7 @@ export function CustomersTable({
 
                 return (
                   <TableRow hover key={row.id} selected={isSelected}>
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        checked={isSelected}
-                        onChange={(event) => {
-                          event.target.checked ? selectOne(row.id) : deselectOne(row.id);
-                        }}
-                      />
-                    </TableCell>
+                    
                     
                     {/* Customer Info */}
                     <TableCell>
@@ -214,24 +199,19 @@ export function CustomersTable({
                     {/* Stations */}
                     <TableCell>
                       <Stack direction="row" spacing={1} flexWrap="wrap">
-                        {row.stations && row.stations.length > 0 ? (
+                        {row.station ? (
                           <>
-                            {row.stations.slice(0, 2).map((station) => (
+                         
                               <Chip
-                                key={station.id}
-                                label={station.name}
-                                color={station.type === 'SEA' ? 'primary' : 'secondary'}
+                                key={row.station.id}
+                                label={row.station.name}
+                                color={row.station.type === 'SEA' ? 'primary' : 'secondary'}
                                 size="small"
                                 variant="outlined"
                               />
-                            ))}
-                            {row.stations.length > 2 && (
-                              <Chip
-                                label={`+${row.stations.length - 2} more`}
-                                size="small"
-                                variant="outlined"
-                              />
-                            )}
+                       
+                    
+                          
                           </>
                         ) : (
                           <Typography variant="body2" color="text.secondary">

@@ -6,7 +6,8 @@ export interface Customer {
   name: string;
   email: string;
   address: string;
-  stations?: Station[];
+  stationId?: string;
+  station?: Station;
 }
 
 export interface CreateCustomerRequest {
@@ -14,7 +15,9 @@ export interface CreateCustomerRequest {
   name: string;
   email: string;
   address: string;
-  stationIds: string[];
+  stationId?: string;
+  station?: Station;
+
 }
 
 export interface UpdateCustomerRequest {
@@ -22,7 +25,8 @@ export interface UpdateCustomerRequest {
   name: string;
   email: string;
   address: string;
-  stationIds: string[];
+  stationId?: string;
+  station?: Station;
 }
 
 export interface CustomerFormData {
@@ -30,5 +34,6 @@ export interface CustomerFormData {
   name: string;
   email: string;
   address: string;
-  stationIds: string[];
+  stationId?: string;
+  station?: Station;
 }

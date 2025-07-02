@@ -13,6 +13,9 @@ const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 const CUSTOMERS_ENDPOINT = `${API_BASE}/${API_VERSION}/customers`;
 const STATIONS_ENDPOINT = `${API_BASE}/${API_VERSION}/stations`;
 
+
+
+
 export interface CustomerContextType {
   // Data
   data: Customer[];
@@ -107,6 +110,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   // Update Customer Mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, customerData }: { id: string; customerData: UpdateCustomerRequest }): Promise<Customer> => {
+      console.log('Updating customer with data:', customerData);
       const response = await axios.put(`${CUSTOMERS_ENDPOINT}/${id}`, customerData);
       return response.data.data || response.data;
     },

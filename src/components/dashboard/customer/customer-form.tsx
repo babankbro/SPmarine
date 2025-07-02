@@ -39,7 +39,8 @@ interface CustomerFormData {
   name: string;
   email: string;
   address: string;
-  stationIds: string[];
+  stationId: string; // Changed from stationIds array to single stationId
+  station?: Station; // Optional station object for edit mode
 }
 
 const initialFormData: CustomerFormData = {
@@ -47,7 +48,8 @@ const initialFormData: CustomerFormData = {
   name: '',
   email: '',
   address: '',
-  stationIds: [],
+  stationId: '', // Changed from stationIds: []
+  station: undefined, // Optional station object for edit mode
 };
 
 export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProps) {
@@ -57,19 +59,31 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>('');
   const [idCheckLoading, setIdCheckLoading] = useState(false);
+  const [isIdValid, setIsIdValid] = useState<boolean>(true);
+  const [hasIdBeenChecked, setHasIdBeenChecked] = useState<boolean>(false);
 
-  // Populate form data when editing
+    // Reset validation states when dialog opens/closes or mode changes
   useEffect(() => {
     if (mode === 'edit' && customer) {
+      // FIX 1: Properly populate form data in edit mode
+      const stationId = customer.station 
+        ? customer.station.id 
+        :  '';
+      
       setFormData({
         id: customer.id,
         name: customer.name,
         email: customer.email,
         address: customer.address,
-        stationIds: customer.stations?.map(s => s.id) || [],
+        stationId: stationId,
+        station: customer.station
       });
+      setIsIdValid(true);
+      setHasIdBeenChecked(true); // In edit mode, ID is always valid
     } else {
       setFormData(initialFormData);
+      setIsIdValid(true);
+      setHasIdBeenChecked(false);
     }
     setErrors({});
     setSubmitError('');
@@ -86,48 +100,84 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // Check ID availability for create mode
-    if (field === 'id' && mode === 'create' && value.trim()) {
-      checkIdAvailability(value.trim());
+    // Reset ID validation states when ID changes
+    if (field === 'id' && mode === 'create') {
+      setIsIdValid(true);
+      setHasIdBeenChecked(false);
+      
+      // Debounced ID check (optional - check after user stops typing for 500ms)
+      if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+        const timeoutId = setTimeout(() => {
+          checkIdAvailability(value.trim());
+        }, 500);
+        
+        return () => clearTimeout(timeoutId);
+      }
     }
   };
 
-  const handleStationChange = (event: SelectChangeEvent<string[]>) => {
+  const handleStationChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     setFormData(prev => ({ 
       ...prev, 
-      stationIds: typeof value === 'string' ? value.split(',') : value 
+      stationId: value, 
+      station: stations.find(station => station.id === value) || undefined
     }));
     
-    if (errors.stationIds) {
-      setErrors(prev => ({ ...prev, stationIds: '' }));
+    if (errors.stationId) {
+      setErrors(prev => ({ ...prev, stationId: '' }));
     }
   };
 
-  const checkIdAvailability = async (id: string) => {
+  const checkIdAvailability = async (id: string): Promise<boolean> => {
+    if (mode === 'edit') {
+      return true; // Don't check ID in edit mode
+    }
+
     setIdCheckLoading(true);
     try {
       const exists = await checkCustomerExists(id);
+      setHasIdBeenChecked(true);
+      
       if (exists) {
         setErrors(prev => ({ ...prev, id: 'This customer ID is already in use' }));
+        setIsIdValid(false);
+        return false;
       } else {
         setErrors(prev => ({ ...prev, id: '' }));
+        setIsIdValid(true);
+        return true;
       }
     } catch (error) {
       console.error('Failed to check customer ID:', error);
+      setErrors(prev => ({ ...prev, id: 'Failed to check ID availability. Please try again.' }));
+      setIsIdValid(false);
+      return false;
     } finally {
       setIdCheckLoading(false);
     }
   };
 
-  const validateForm = (): boolean => {
+  const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
 
     // Required fields
     if (!formData.id.trim()) {
       newErrors.id = 'Customer ID is required';
+      setIsIdValid(false);
     } else if (!/^[a-zA-Z0-9_-]+$/.test(formData.id)) {
       newErrors.id = 'Customer ID can only contain letters, numbers, underscores, and hyphens';
+      setIsIdValid(false);
+    } else if (mode === 'create') {
+      // Check ID availability for create mode
+      if (!hasIdBeenChecked) {
+        const isValid = await checkIdAvailability(formData.id.trim());
+        if (!isValid) {
+          newErrors.id = 'This customer ID is already in use';
+        }
+      } else if (!isIdValid) {
+        newErrors.id = 'This customer ID is already in use';
+      }
     }
 
     if (!formData.name.trim()) {
@@ -145,11 +195,19 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return Object.keys(newErrors).length === 0 && (mode === 'edit' || isIdValid);
   };
 
   const handleSubmit = async () => {
-    if (!validateForm()) {
+    const isFormValid = await validateForm();
+    
+    if (!isFormValid) {
+      return;
+    }
+
+    // Additional check to ensure ID is valid before submission
+    if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
+      setSubmitError('Please ensure the customer ID is valid before submitting.');
       return;
     }
 
@@ -162,7 +220,8 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
           name: formData.name.trim(),
           email: formData.email.trim(),
           address: formData.address.trim(),
-          stationIds: formData.stationIds,
+          stationId: formData.stationId,
+          station: formData.station,
         };
 
         await createCustomer(customerData);
@@ -172,9 +231,11 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
           name: formData.name.trim(),
           email: formData.email.trim(),
           address: formData.address.trim(),
-          stationIds: formData.stationIds,
+          stationId: formData.stationId,
+          station: formData.station, // Include station object for edit mode
         };
-
+        //console.log('Customer data before update:', formData.station);
+        //console.log('Updating customer:', customerData);
         await updateCustomer(customer.id, customerData);
       }
 
@@ -186,6 +247,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
   };
 
   const isLoading = isCreating || isUpdating;
+  const canSubmit = mode === 'edit' || (isIdValid && hasIdBeenChecked) || !formData.id.trim();
 
   return (
     <Dialog 
@@ -207,6 +269,19 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
             {submitError}
           </Alert>
         )}
+
+      {/* Show ID validation status for create mode */}
+        {mode === 'create' && formData.id.trim() && hasIdBeenChecked && (
+          <Alert 
+            severity={isIdValid ? "success" : "error"} 
+            sx={{ mb: 2 }}
+          >
+            {isIdValid 
+              ? "Customer ID is available!" 
+              : "Customer ID is already in use. Please choose a different ID."
+            }
+          </Alert>
+          )}
 
         <Grid container spacing={3}>
           {/* Basic Information */}
@@ -277,29 +352,17 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
           </Grid>
 
           <Grid item xs={12}>
-            <FormControl fullWidth error={!!errors.stationIds}>
-              <InputLabel>Associated Stations</InputLabel>
+            <FormControl fullWidth error={!!errors.stationId}>
+              <InputLabel>Associated Station</InputLabel>
               <Select
-                multiple
-                value={formData.stationIds}
+                value={formData.stationId}
                 onChange={handleStationChange}
-                input={<OutlinedInput label="Associated Stations" />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((stationId) => {
-                      const station = stations.find(s => s.id === stationId);
-                      return (
-                        <Chip 
-                          key={stationId} 
-                          label={station ? `${station.name} (${station.type})` : stationId}
-                          color={station?.type === 'SEA' ? 'primary' : 'secondary'}
-                          size="small"
-                        />
-                      );
-                    })}
-                  </Box>
-                )}
+                //label="Associated Station"
+                displayEmpty
               >
+                <MenuItem value="">
+                  {/* <em>No Station Selected</em> */}
+                </MenuItem>
                 {stations.map((station) => (
                   <MenuItem key={station.id} value={station.id}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
@@ -313,18 +376,18 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
                   </MenuItem>
                 ))}
               </Select>
-              {errors.stationIds && (
+              {errors.stationId && (
                 <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                  {errors.stationIds}
+                  {errors.stationId}
                 </Typography>
               )}
             </FormControl>
           </Grid>
 
-          {formData.stationIds.length > 0 && (
+          {formData.stationId && (
             <Grid item xs={12}>
               <Alert severity="info">
-                This customer will be associated with {formData.stationIds.length} station(s).
+                This customer will be associated with {formData.stationId} station(s).
               </Alert>
             </Grid>
           )}
