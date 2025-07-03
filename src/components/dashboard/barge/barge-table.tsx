@@ -164,7 +164,7 @@ export function BargeTable({
           <Table sx={{ minWidth: "800px" }}>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox">
+                {/* <TableCell padding="checkbox">
                   <Checkbox
                     checked={selectedAll}
                     indeterminate={selectedSome}
@@ -172,7 +172,7 @@ export function BargeTable({
                       event.target.checked ? selectAll() : deselectAll();
                     }}
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell>Barge</TableCell>
                 <TableCell>Specifications</TableCell>
                 <TableCell>Location & Status</TableCell>
@@ -187,14 +187,14 @@ export function BargeTable({
 
                 return (
                   <TableRow hover key={row.id} selected={isSelected}>
-                    <TableCell padding="checkbox">
+                    {/* <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
                         onChange={(event) => {
                           event.target.checked ? selectOne(row.id) : deselectOne(row.id);
                         }}
                       />
-                    </TableCell>
+                    </TableCell> */}
                     
                     {/* Barge Info Column */}
                     <TableCell>
@@ -239,11 +239,11 @@ export function BargeTable({
                           size="small"
                           variant="outlined"
                         />
-                        {row.latitude && row.longitude && (
+                        {/* {row.latitude && row.longitude && (
                           <Typography variant="caption" color="text.secondary">
                             {row.latitude.toFixed(4)}, {row.longitude.toFixed(4)}
                           </Typography>
-                        )}
+                        )} */}
                       </Stack>
                     </TableCell>
 

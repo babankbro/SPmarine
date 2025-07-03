@@ -45,8 +45,8 @@ const initialFormData: BargeFormData = {
   stationId: '',
   setupTime: '',
   readyDatetime: new Date().toISOString(),
-  latitude: '',
-  longitude: '',
+  //latitude: '',
+  //longitude: '',
   distanceKm: '',
 };
 
@@ -72,8 +72,8 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
         stationId: barge.stationId || '',
         setupTime: barge.setupTime.toString(),
         readyDatetime: typeof barge.readyDatetime === 'string' ? barge.readyDatetime : barge.readyDatetime.toISOString(),
-        latitude: barge.latitude?.toString() || '',
-        longitude: barge.longitude?.toString() || '',
+        //latitude: barge.latitude?.toString() || '',
+        //longitude: barge.longitude?.toString() || '',
         distanceKm: barge.distanceKm?.toString() || '',
       });
       setIsIdValid(true);
@@ -204,12 +204,12 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
     });
 
     // Validate optional coordinates
-    if (formData.latitude && isNaN(Number(formData.latitude))) {
-      newErrors.latitude = 'Must be a valid number';
-    }
-    if (formData.longitude && isNaN(Number(formData.longitude))) {
-      newErrors.longitude = 'Must be a valid number';
-    }
+    // if (formData.latitude && isNaN(Number(formData.latitude))) {
+    //   newErrors.latitude = 'Must be a valid number';
+    // }
+    // if (formData.longitude && isNaN(Number(formData.longitude))) {
+    //   newErrors.longitude = 'Must be a valid number';
+    // }
     if (formData.distanceKm && isNaN(Number(formData.distanceKm))) {
       newErrors.distanceKm = 'Must be a valid number';
     }
@@ -244,8 +244,8 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
           stationId: formData.stationId || undefined,
           setupTime: Number(formData.setupTime),
           readyDatetime: formData.readyDatetime,
-          latitude: formData.latitude ? Number(formData.latitude) : undefined,
-          longitude: formData.longitude ? Number(formData.longitude) : undefined,
+        //   latitude: formData.latitude ? Number(formData.latitude) : undefined,
+        //   longitude: formData.longitude ? Number(formData.longitude) : undefined,
           distanceKm: formData.distanceKm ? Number(formData.distanceKm) : undefined,
         };
 
@@ -259,8 +259,8 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
           stationId: formData.stationId || undefined,
           setupTime: Number(formData.setupTime),
           readyDatetime: formData.readyDatetime,
-          latitude: formData.latitude ? Number(formData.latitude) : undefined,
-          longitude: formData.longitude ? Number(formData.longitude) : undefined,
+        //   latitude: formData.latitude ? Number(formData.latitude) : undefined,
+        //   longitude: formData.longitude ? Number(formData.longitude) : undefined,
           distanceKm: formData.distanceKm ? Number(formData.distanceKm) : undefined,
         };
 
@@ -383,7 +383,7 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
               <TextField
                 fullWidth
                 type="number"
-                label="Setup Time (hours)"
+                label="Setup Time (minutes)"
                 value={formData.setupTime}
                 onChange={handleInputChange('setupTime')}
                 error={!!errors.setupTime}
@@ -484,7 +484,7 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
             )}
 
             {/* Location Information (Optional) */}
-            <Grid item xs={12}>
+            {/* <Grid item xs={12}>
               <Divider sx={{ my: 1 }} />
               <Typography variant="h6" gutterBottom>
                 Location Information (Optional)
@@ -515,9 +515,9 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
                 helperText={errors.longitude}
                 inputProps={{ step: "any" }}
               />
-            </Grid>
+            </Grid> */}
 
-            <Grid item xs={12} sm={4}>
+            {/* <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 type="number"
@@ -527,7 +527,7 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
                 error={!!errors.distanceKm}
                 helperText={errors.distanceKm}
               />
-            </Grid>
+            </Grid> */}
           </Grid>
         </DialogContent>
 

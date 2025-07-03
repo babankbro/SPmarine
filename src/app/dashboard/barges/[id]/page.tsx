@@ -380,9 +380,9 @@ export default function BargeDetailsPage() {
                         Coordinates
                       </Typography>
                     </Stack>
-                    <Typography variant="body1" fontWeight="medium">
+                    {/* <Typography variant="body1" fontWeight="medium">
                       {barge.latitude.toFixed(4)}, {barge.longitude.toFixed(4)}
-                    </Typography>
+                    </Typography> */}
                   </Box>
                 )}
                 

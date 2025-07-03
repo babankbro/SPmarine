@@ -11,8 +11,8 @@ export interface Barge {
   station?: Station;
   setupTime: number;
   readyDatetime: Date | string;
-  latitude?: number;
-  longitude?: number;
+  //latitude?: number;
+  //longitude?: number;
   distanceKm?: number;
 }
 
@@ -25,8 +25,8 @@ export interface CreateBargeRequest {
   stationId?: string;
   setupTime: number;
   readyDatetime: Date | string;
-  latitude?: number;
-  longitude?: number;
+  //latitude?: number;
+  //longitude?: number;
   distanceKm?: number;
 }
 
@@ -39,8 +39,8 @@ export interface UpdateBargeRequest {
   stationId?: string;
   setupTime?: number;
   readyDatetime?: Date | string;
-  latitude?: number;
-  longitude?: number;
+  //latitude?: number;
+  //longitude?: number;
   distanceKm?: number;
 }
 
@@ -53,7 +53,7 @@ export interface BargeFormData {
   stationId: string;
   setupTime: string;
   readyDatetime: string;
-  latitude: string;
-  longitude: string;
+  //latitude: string;
+ // longitude: string;
   distanceKm: string;
 }

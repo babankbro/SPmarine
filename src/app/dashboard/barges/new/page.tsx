@@ -15,8 +15,8 @@ export default function Page() {
 		name: "",
 		weight: 0,
 		capacity: 0,
-		latitude: 0,
-		longitude: 0,
+		//latitude: 0,
+		//longitude: 0,
 		waterStatus: "SEA",
 		stationId: "",
 		distanceKm: 0,
@@ -36,8 +36,8 @@ export default function Page() {
 				name === "maxSpeed" ||
 				name === "engineRpm" ||
 				name === "horsePower" ||
-				name === "latitude" ||
-				name === "longitude" ||
+				//name === "latitude" ||
+				//name === "longitude" ||
 				name === "distanceKm"
 					? Number(value)
 					: value,
