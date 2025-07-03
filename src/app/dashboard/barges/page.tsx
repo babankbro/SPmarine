@@ -86,8 +86,9 @@ export default function BargesPage() {
 
     // Sort barges
     filtered.sort((a, b) => {
-      const aValue = a[filters.sortBy as keyof Barge];
-      const bValue = b[filters.sortBy as keyof Barge];
+      const aValue = a[filters.sortBy as keyof Barge] || '';
+      const bValue = b[filters.sortBy as keyof Barge] || '';
+	  
 
       if (filters.sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;

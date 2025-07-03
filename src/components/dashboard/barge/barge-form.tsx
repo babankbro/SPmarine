@@ -1,4 +1,3 @@
-// src/components/dashboard/barge/barge-form.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -19,6 +18,7 @@ import {
   Divider,
   Alert,
   Chip,
+  Stack,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -34,6 +34,9 @@ interface BargeFormProps {
   onClose: () => void;
   barge?: Barge;
   mode: 'create' | 'edit';
+  onSuccess?: () => void;
+  onError?: (error: string) => void;
+  embedded?: boolean;
 }
 
 const initialFormData: BargeFormData = {
@@ -45,12 +48,18 @@ const initialFormData: BargeFormData = {
   stationId: '',
   setupTime: '',
   readyDatetime: new Date().toISOString(),
-  //latitude: '',
-  //longitude: '',
   distanceKm: '',
 };
 
-export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
+export function BargeForm({ 
+  open, 
+  onClose, 
+  barge, 
+  mode, 
+  onSuccess, 
+  onError, 
+  embedded = false 
+}: BargeFormProps) {
   const { createBarge, updateBarge, refreshData, isCreating, isUpdating, checkBargeExists } = useBarge();
   const stations = useStation();
   const [formData, setFormData] = useState<BargeFormData>(initialFormData);
@@ -60,7 +69,7 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
   const [isIdValid, setIsIdValid] = useState<boolean>(true);
   const [hasIdBeenChecked, setHasIdBeenChecked] = useState<boolean>(false);
 
-  // Reset validation states when dialog opens/closes or mode changes
+  // Reset form when dialog opens/closes or mode changes
   useEffect(() => {
     if (mode === 'edit' && barge) {
       setFormData({
@@ -72,12 +81,10 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
         stationId: barge.stationId || '',
         setupTime: barge.setupTime.toString(),
         readyDatetime: typeof barge.readyDatetime === 'string' ? barge.readyDatetime : barge.readyDatetime.toISOString(),
-        //latitude: barge.latitude?.toString() || '',
-        //longitude: barge.longitude?.toString() || '',
         distanceKm: barge.distanceKm?.toString() || '',
       });
       setIsIdValid(true);
-      setHasIdBeenChecked(true); // In edit mode, ID is always valid
+      setHasIdBeenChecked(true);
     } else {
       setFormData(initialFormData);
       setIsIdValid(true);
@@ -91,6 +98,7 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const value = event.target.value;
+
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
@@ -98,12 +106,11 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // Reset ID validation states when ID changes
+    // ID validation for create mode
     if (field === 'id' && mode === 'create') {
       setIsIdValid(true);
       setHasIdBeenChecked(false);
       
-      // Debounced ID check (optional - check after user stops typing for 500ms)
       if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
         const timeoutId = setTimeout(() => {
           checkIdAvailability(value.trim());
@@ -136,9 +143,7 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
   };
 
   const checkIdAvailability = async (id: string): Promise<boolean> => {
-    if (mode === 'edit') {
-      return true; // Don't check ID in edit mode
-    }
+    if (mode === 'edit') return true;
 
     setIdCheckLoading(true);
     try {
@@ -175,7 +180,6 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
       newErrors.id = 'Barge ID can only contain letters, numbers, underscores, and hyphens';
       setIsIdValid(false);
     } else if (mode === 'create') {
-      // Check ID availability for create mode
       if (!hasIdBeenChecked) {
         const isValid = await checkIdAvailability(formData.id.trim());
         if (!isValid) {
@@ -203,13 +207,6 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
       }
     });
 
-    // Validate optional coordinates
-    // if (formData.latitude && isNaN(Number(formData.latitude))) {
-    //   newErrors.latitude = 'Must be a valid number';
-    // }
-    // if (formData.longitude && isNaN(Number(formData.longitude))) {
-    //   newErrors.longitude = 'Must be a valid number';
-    // }
     if (formData.distanceKm && isNaN(Number(formData.distanceKm))) {
       newErrors.distanceKm = 'Must be a valid number';
     }
@@ -225,9 +222,9 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
       return;
     }
 
-    // Additional check to ensure ID is valid before submission
     if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
       setSubmitError('Please ensure the barge ID is valid before submitting.');
+      if (onError) onError('Please ensure the barge ID is valid before submitting.');
       return;
     }
 
@@ -244,8 +241,6 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
           stationId: formData.stationId || undefined,
           setupTime: Number(formData.setupTime),
           readyDatetime: formData.readyDatetime,
-        //   latitude: formData.latitude ? Number(formData.latitude) : undefined,
-        //   longitude: formData.longitude ? Number(formData.longitude) : undefined,
           distanceKm: formData.distanceKm ? Number(formData.distanceKm) : undefined,
         };
 
@@ -259,23 +254,284 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
           stationId: formData.stationId || undefined,
           setupTime: Number(formData.setupTime),
           readyDatetime: formData.readyDatetime,
-        //   latitude: formData.latitude ? Number(formData.latitude) : undefined,
-        //   longitude: formData.longitude ? Number(formData.longitude) : undefined,
           distanceKm: formData.distanceKm ? Number(formData.distanceKm) : undefined,
         };
 
         await updateBarge(barge.id, bargeData);
       }
 
+      if (onSuccess) onSuccess();
       onClose();
     } catch (error: any) {
       console.error('Failed to save barge:', error);
-      setSubmitError(error?.response?.data?.message || `Failed to ${mode} barge. Please try again.`);
+      const errorMessage = error?.response?.data?.message || `Failed to ${mode} barge. Please try again.`;
+      setSubmitError(errorMessage);
+      if (onError) onError(errorMessage);
     }
   };
 
   const isLoading = isCreating || isUpdating;
-  const canSubmit = mode === 'edit' || (isIdValid && hasIdBeenChecked) || !formData.id.trim();
+
+  const formContent = (
+    <Box>
+      {submitError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {submitError}
+        </Alert>
+      )}
+
+      {/* ID validation status for create mode */}
+      {mode === 'create' && formData.id.trim() && hasIdBeenChecked && (
+        <Alert 
+          severity={isIdValid ? "success" : "error"} 
+          sx={{ mb: 2 }}
+        >
+          {isIdValid 
+            ? "Barge ID is available!" 
+            : "Barge ID is already in use. Please choose a different ID."
+          }
+        </Alert>
+      )}
+
+      <Grid container spacing={3}>
+        {/* Basic Information */}
+        <Grid item xs={12}>
+          <Typography variant="h6" gutterBottom>
+            Barge Information
+          </Typography>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Barge ID"
+            value={formData.id}
+            onChange={handleInputChange('id')}
+            error={!!errors.id}
+            helperText={errors.id || (mode === 'create' ? 'Unique identifier for the barge' : 'Barge ID cannot be changed')}
+            required
+            disabled={mode === 'edit' || idCheckLoading}
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Barge Name"
+            value={formData.name}
+            onChange={handleInputChange('name')}
+            error={!!errors.name}
+            helperText={errors.name}
+            required
+          />
+        </Grid>
+
+        {/* Specifications */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 1 }} />
+          <Typography variant="h6" gutterBottom>
+            Specifications
+          </Typography>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Weight (tons)"
+            value={formData.weight}
+            onChange={handleInputChange('weight')}
+            error={!!errors.weight}
+            helperText={errors.weight}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Capacity (tons)"
+            value={formData.capacity}
+            onChange={handleInputChange('capacity')}
+            error={!!errors.capacity}
+            helperText={errors.capacity}
+            required
+          />
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Setup Time (minutes)"
+            value={formData.setupTime}
+            onChange={handleInputChange('setupTime')}
+            error={!!errors.setupTime}
+            helperText={errors.setupTime}
+            required
+          />
+        </Grid>
+
+        {/* Operational Information */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 1 }} />
+          <Typography variant="h6" gutterBottom>
+            Operational Information
+          </Typography>
+        </Grid>
+
+        {/* <Grid item xs={12} sm={6}>
+          <FormControl fullWidth error={!!errors.waterStatus}>
+            <InputLabel>Water Status</InputLabel>
+            <Select
+              value={formData.waterStatus}
+              onChange={handleSelectChange('waterStatus')}
+              label="Water Status"
+            >
+              <MenuItem value="SEA">Sea</MenuItem>
+              <MenuItem value="RIVER">River</MenuItem>
+            </Select>
+            {errors.waterStatus && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                {errors.waterStatus}
+              </Typography>
+            )}
+          </FormControl>
+        </Grid> */}
+
+        <Grid item xs={12} sm={12}>
+          <DateTimePicker
+            label="Ready Date & Time"
+            value={new Date(formData.readyDatetime)}
+            onChange={handleDateChange}
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                error: !!errors.readyDatetime,
+                helperText: errors.readyDatetime,
+              }
+            }}
+          />
+        </Grid>
+
+        {/* Station Assignment */}
+        <Grid item xs={12}>
+          <Divider sx={{ my: 1 }} />
+          <Typography variant="h6" gutterBottom>
+            Station Assignment
+          </Typography>
+        </Grid>
+
+        <Grid item xs={12}>
+          <FormControl fullWidth error={!!errors.stationId}>
+            <InputLabel>Assigned Station</InputLabel>
+            <Select
+              value={formData.stationId}
+              onChange={(event) => {
+                const station = stations.find((s) => s.id === formData.stationId);
+                setFormData((prevState) => ({
+                  ...prevState,
+                  stationId: event.target.value,
+                  waterStatus: station ? station.type : 'SEA', // Default to SEA if no station selected
+                }));
+                handleSelectChange('stationId')
+              }}
+         
+              label="Assigned Station"
+              displayEmpty
+            >
+              <MenuItem value="">
+                <em>No Station Selected</em>
+              </MenuItem>
+              {stations.map((station) => (
+                <MenuItem key={station.id} value={station.id}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <Typography>{station.name}</Typography>
+                    <Chip
+                      label={station.type}
+                      color={station.type === 'SEA' ? 'primary' : 'secondary'}
+                      size="small"
+                    />
+                  </Box>
+                </MenuItem>
+              ))}
+            </Select>
+            {errors.stationId && (
+              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
+                {errors.stationId}
+              </Typography>
+            )}
+          </FormControl>
+        </Grid>
+
+        {formData.stationId && (
+          <Grid item xs={12}>
+            <Alert severity="info">
+              This barge will be assigned to {stations.find(s => s.id === formData.stationId)?.name || formData.stationId} station.
+            </Alert>
+          </Grid>
+        )}
+
+        {/* Optional Distance */}
+        {/* <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            type="number"
+            label="Distance (km)"
+            value={formData.distanceKm}
+            onChange={handleInputChange('distanceKm')}
+            error={!!errors.distanceKm}
+            helperText={errors.distanceKm || "Optional distance information"}
+          />
+        </Grid> */}
+      </Grid>
+
+      {!embedded && (
+        <DialogActions sx={{ p: 2, mt: 2 }}>
+          <Button onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            disabled={isLoading || (mode === 'create' && !!errors.id)}
+          >
+            {isLoading 
+              ? (mode === 'create' ? 'Creating...' : 'Updating...') 
+              : (mode === 'create' ? 'Create Barge' : 'Update Barge')
+            }
+          </Button>
+        </DialogActions>
+      )}
+
+      {embedded && (
+        <Stack direction="row" spacing={2} sx={{ mt: 3, justifyContent: 'flex-end' }}>
+          <Button onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            disabled={isLoading || (mode === 'create' && !!errors.id)}
+          >
+            {isLoading 
+              ? (mode === 'create' ? 'Creating...' : 'Updating...') 
+              : (mode === 'create' ? 'Create Barge' : 'Update Barge')
+            }
+          </Button>
+        </Stack>
+      )}
+    </Box>
+  );
+
+  if (embedded) {
+    return (
+      <LocalizationProvider dateAdapter={AdapterDateFns}>
+        {formContent}
+      </LocalizationProvider>
+    );
+  }
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
@@ -293,259 +549,8 @@ export function BargeForm({ open, onClose, barge, mode }: BargeFormProps) {
         </DialogTitle>
         
         <DialogContent dividers sx={{ p: 3 }}>
-          {submitError && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {submitError}
-            </Alert>
-          )}
-
-          {/* Show ID validation status for create mode */}
-          {mode === 'create' && formData.id.trim() && hasIdBeenChecked && (
-            <Alert 
-              severity={isIdValid ? "success" : "error"} 
-              sx={{ mb: 2 }}
-            >
-              {isIdValid 
-                ? "Barge ID is available!" 
-                : "Barge ID is already in use. Please choose a different ID."
-              }
-            </Alert>
-          )}
-
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Barge Information
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Barge ID"
-                value={formData.id}
-                onChange={handleInputChange('id')}
-                error={!!errors.id}
-                helperText={errors.id || (mode === 'create' ? 'Unique identifier for the barge' : 'Barge ID cannot be changed')}
-                required
-                disabled={mode === 'edit' || idCheckLoading}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Barge Name"
-                value={formData.name}
-                onChange={handleInputChange('name')}
-                error={!!errors.name}
-                helperText={errors.name}
-                required
-              />
-            </Grid>
-
-            {/* Specifications */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Specifications
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Weight (tons)"
-                value={formData.weight}
-                onChange={handleInputChange('weight')}
-                error={!!errors.weight}
-                helperText={errors.weight}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Capacity (tons)"
-                value={formData.capacity}
-                onChange={handleInputChange('capacity')}
-                error={!!errors.capacity}
-                helperText={errors.capacity}
-                required
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Setup Time (minutes)"
-                value={formData.setupTime}
-                onChange={handleInputChange('setupTime')}
-                error={!!errors.setupTime}
-                helperText={errors.setupTime}
-                required
-              />
-            </Grid>
-
-            {/* Operational Information */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Operational Information
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.waterStatus}>
-                <InputLabel>Water Status</InputLabel>
-                <Select
-                  value={formData.waterStatus}
-                  onChange={handleSelectChange('waterStatus')}
-                  label="Water Status"
-                >
-                  <MenuItem value="SEA">Sea</MenuItem>
-                  <MenuItem value="RIVER">River</MenuItem>
-                </Select>
-                {errors.waterStatus && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                    {errors.waterStatus}
-                  </Typography>
-                )}
-              </FormControl>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <DateTimePicker
-                label="Ready Date & Time"
-                value={new Date(formData.readyDatetime)}
-                onChange={handleDateChange}
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    error: !!errors.readyDatetime,
-                    helperText: errors.readyDatetime,
-                  }
-                }}
-              />
-            </Grid>
-
-            {/* Station Assignment */}
-            <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Station Assignment
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12}>
-              <FormControl fullWidth error={!!errors.stationId}>
-                <InputLabel>Assigned Station</InputLabel>
-                <Select
-                  value={formData.stationId}
-                  onChange={handleSelectChange('stationId')}
-                  label="Assigned Station"
-                  displayEmpty
-                >
-                  <MenuItem value="">
-                    <em>No Station Selected</em>
-                  </MenuItem>
-                  {stations.map((station) => (
-                    <MenuItem key={station.id} value={station.id}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                        <Typography>{station.name}</Typography>
-                        <Chip
-                          label={station.type}
-                          color={station.type === 'SEA' ? 'primary' : 'secondary'}
-                          size="small"
-                        />
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-                {errors.stationId && (
-                  <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                    {errors.stationId}
-                  </Typography>
-                )}
-              </FormControl>
-            </Grid>
-
-            {formData.stationId && (
-              <Grid item xs={12}>
-                <Alert severity="info">
-                  This barge will be assigned to {stations.find(s => s.id === formData.stationId)?.name || formData.stationId} station.
-                </Alert>
-              </Grid>
-            )}
-
-            {/* Location Information (Optional) */}
-            {/* <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-              <Typography variant="h6" gutterBottom>
-                Location Information (Optional)
-              </Typography>
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Latitude"
-                value={formData.latitude}
-                onChange={handleInputChange('latitude')}
-                error={!!errors.latitude}
-                helperText={errors.latitude}
-                inputProps={{ step: "any" }}
-              />
-            </Grid>
-
-            <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Longitude"
-                value={formData.longitude}
-                onChange={handleInputChange('longitude')}
-                error={!!errors.longitude}
-                helperText={errors.longitude}
-                inputProps={{ step: "any" }}
-              />
-            </Grid> */}
-
-            {/* <Grid item xs={12} sm={4}>
-              <TextField
-                fullWidth
-                type="number"
-                label="Distance (km)"
-                value={formData.distanceKm}
-                onChange={handleInputChange('distanceKm')}
-                error={!!errors.distanceKm}
-                helperText={errors.distanceKm}
-              />
-            </Grid> */}
-          </Grid>
+          {formContent}
         </DialogContent>
-
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained" 
-            disabled={isLoading || (mode === 'create' && !!errors.id)}
-          >
-            {isLoading 
-              ? (mode === 'create' ? 'Creating...' : 'Updating...') 
-              : (mode === 'create' ? 'Create Barge' : 'Update Barge')
-            }
-          </Button>
-        </DialogActions>
       </Dialog>
     </LocalizationProvider>
   );

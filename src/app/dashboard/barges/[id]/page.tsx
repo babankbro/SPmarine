@@ -17,6 +17,8 @@ import {
   Skeleton,
   IconButton,
   Tooltip,
+  Breadcrumbs,
+  Link,
 } from "@mui/material";
 import {
   ArrowLeft as BackIcon,
@@ -28,12 +30,14 @@ import {
   Compass as CompassIcon,
   Gauge as GaugeIcon,
   Clock as ClockIcon,
-  Barbell as BarbellIcon, // Use Barbell instead of Scale for weight
+  Barbell as BarbellIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import NextLink from "next/link";
 
 import { useBarge } from "@/hooks/use-barge";
 import { BargeForm } from "@/components/dashboard/barge/barge-form";
 import { Barge } from "@/types/barge";
+import { paths } from "@/paths";
 
 export default function BargeDetailsPage() {
   const params = useParams();
@@ -68,7 +72,6 @@ export default function BargeDetailsPage() {
 
   const handleEdit = () => {
     setEditDialogOpen(true);
-    refreshData();
   };
 
   const handleDelete = async () => {
@@ -82,7 +85,7 @@ export default function BargeDetailsPage() {
     
     try {
       await deleteBarge(barge.id);
-      router.push('/dashboard/barges');
+      router.push(paths.dashboard.barges);
     } catch (error) {
       console.error('Failed to delete barge:', error);
       alert('Failed to delete barge');
@@ -90,6 +93,21 @@ export default function BargeDetailsPage() {
   };
 
   const handleEditClose = async () => {
+    setEditDialogOpen(false);
+    refreshData();
+    if (bargeId) {
+      try {
+        const refreshedBarge = await getBargeById(bargeId);
+        if (refreshedBarge) {
+          setBarge(refreshedBarge);
+        }
+      } catch (error) {
+        console.error('Failed to refresh barge:', error);
+      }
+    }
+  };
+
+  const handleEditSuccess = async () => {
     setEditDialogOpen(false);
     refreshData();
     if (bargeId) {
@@ -143,7 +161,7 @@ export default function BargeDetailsPage() {
       <Box sx={{ p: 3 }}>
         <Alert severity="error">
           {error}
-          <Button onClick={() => router.push('/dashboard/barges')} sx={{ ml: 2 }}>
+          <Button onClick={() => router.push(paths.dashboard.barges)} sx={{ ml: 2 }}>
             Back to Barges
           </Button>
         </Alert>
@@ -156,7 +174,7 @@ export default function BargeDetailsPage() {
       <Box sx={{ p: 3 }}>
         <Alert severity="info">
           Barge not found
-          <Button onClick={() => router.push('/dashboard/barges')} sx={{ ml: 2 }}>
+          <Button onClick={() => router.push(paths.dashboard.barges)} sx={{ ml: 2 }}>
             Back to Barges
           </Button>
         </Alert>
@@ -168,9 +186,24 @@ export default function BargeDetailsPage() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* Breadcrumbs */}
+      <Breadcrumbs sx={{ mb: 2 }}>
+        <Link
+          component={NextLink}
+          href={paths.dashboard.barges}
+          underline="hover"
+          color="inherit"
+          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+        >
+          <BoatIcon size={16} />
+          Barges
+        </Link>
+        <Typography color="text.primary">{barge.name}</Typography>
+      </Breadcrumbs>
+
       {/* Header */}
       <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-        <IconButton onClick={() => router.push('/dashboard/barges')}>
+        <IconButton onClick={() => router.push(paths.dashboard.barges)}>
           <BackIcon size={24} />
         </IconButton>
         <Box sx={{ flexGrow: 1 }}>
@@ -193,20 +226,24 @@ export default function BargeDetailsPage() {
               size="small"
               icon={<ClockIcon size={16} />}
             />
-            <Tooltip title="Edit Barge">
-              <IconButton onClick={handleEdit} color="primary">
-                <EditIcon size={20} />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="Delete Barge">
-              <IconButton onClick={handleDelete} color="error" disabled={isDeleting}>
-                <DeleteIcon size={20} />
-              </IconButton>
-            </Tooltip>
           </Stack>
         </Box>
+        <Stack direction="row" spacing={1}>
+          <Tooltip title="Edit Barge">
+            <IconButton onClick={handleEdit} color="primary">
+              <EditIcon size={20} />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete Barge">
+            <IconButton onClick={handleDelete} color="error" disabled={isDeleting}>
+              <DeleteIcon size={20} />
+            </IconButton>
+          </Tooltip>
+        </Stack>
       </Stack>
+
       {/* Summary Statistics */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12}>
           <Card>
             <CardContent>
@@ -216,7 +253,7 @@ export default function BargeDetailsPage() {
               <Divider sx={{ mb: 2 }} />
               
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="primary">
                       {barge.weight.toLocaleString()}
@@ -227,7 +264,7 @@ export default function BargeDetailsPage() {
                   </Box>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="secondary">
                       {barge.capacity.toLocaleString()}
@@ -238,7 +275,7 @@ export default function BargeDetailsPage() {
                   </Box>
                 </Grid>
                 
-                <Grid item xs={12} sm={6} md={4}>
+                <Grid item xs={12} sm={6} md={3}>
                   <Box textAlign="center">
                     <Typography variant="h4" color="success.main">
                       {barge.setupTime}
@@ -249,11 +286,22 @@ export default function BargeDetailsPage() {
                   </Box>
                 </Grid>
                 
-                
+                <Grid item xs={12} sm={6} md={3}>
+                  <Box textAlign="center">
+                    <Typography variant="h4" color="warning.main">
+                      {barge.distanceKm || 0}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Distance (km)
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
             </CardContent>
           </Card>
         </Grid>
+      </Grid>
+
       <Grid container spacing={3}>
         {/* Basic Information */}
         <Grid item xs={12} md={6}>
@@ -355,7 +403,6 @@ export default function BargeDetailsPage() {
         <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-	
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                 <LocationIcon size={24} />
                 <Typography variant="h6">Location & Station</Typography>
@@ -365,28 +412,31 @@ export default function BargeDetailsPage() {
               <Stack spacing={2}>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Station ID
+                    Station Assignment
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
-                    {barge.stationId || 'Not assigned'} {barge.station ? `(${barge.station.name})` : ''}
+                    {barge.station ? (
+                      `${barge.station.name} (${barge.station.id})`
+                    ) : (
+                      'Not assigned to any station'
+                    )}
                   </Typography>
                 </Box>
                 
-                {barge.latitude && barge.longitude && (
+                {barge.station && (
                   <Box>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <CompassIcon size={16} />
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Coordinates
-                      </Typography>
-                    </Stack>
-                    {/* <Typography variant="body1" fontWeight="medium">
-                      {barge.latitude.toFixed(4)}, {barge.longitude.toFixed(4)}
-                    </Typography> */}
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Station Type
+                    </Typography>
+                    <Chip
+                      label={barge.station.type}
+                      color={barge.station.type === 'SEA' ? 'primary' : 'secondary'}
+                      size="small"
+                    />
                   </Box>
                 )}
                 
-                {(barge.distanceKm? barge.distanceKm > 0 : false ) && (
+                {barge.distanceKm && barge.distanceKm > 0 && (
                   <Box>
                     <Typography variant="subtitle2" color="text.secondary">
                       Distance
@@ -399,60 +449,51 @@ export default function BargeDetailsPage() {
               </Stack>
             </CardContent>
           </Card>
-
         </Grid>
 
-       <Grid item xs={12} md={6}>
+        {/* Operational Status */}
+        <Grid item xs={12} md={6}>
           <Card>
             <CardContent>
-	
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-                <LocationIcon size={24} />
-                <Typography variant="h6">River Distance</Typography>
+                <AnchorIcon size={24} />
+                <Typography variant="h6">Operational Status</Typography>
               </Stack>
               <Divider sx={{ mb: 2 }} />
               
               <Stack spacing={2}>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    {barge.station ?.type === 'RIVER' ? 'Is in River'  : 'Is not in River'}
+                    Current Status
+                  </Typography>
+                  <Chip
+                    label={readyStatusInfo.status}
+                    color={readyStatusInfo.color}
+                    size="medium"
+                  />
+                </Box>
+                
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Ready Since
                   </Typography>
                   <Typography variant="body1" fontWeight="medium">
-                    {barge.station ?.type === 'RIVER' ? barge.station.distanceKm : 0} km
+                    {formatDateTime(barge.readyDatetime)}
                   </Typography>
                 </Box>
                 
-                {barge.latitude && barge.longitude && (
-                  <Box>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <CompassIcon size={16} />
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Coordinates
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body1" fontWeight="medium">
-                      {barge.latitude.toFixed(4)}, {barge.longitude.toFixed(4)}
-                    </Typography>
-                  </Box>
-                )}
-                
-                {(barge.distanceKm? barge.distanceKm > 0 : false ) && (
-                  <Box>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      Distance
-                    </Typography>
-                    <Typography variant="body1" fontWeight="medium">
-                      {barge.distanceKm} km
-                    </Typography>
-                  </Box>
-                )}
+                {/* <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Water Type
+                  </Typography>
+                  <Typography variant="body1" fontWeight="medium">
+                    {barge.waterStatus === 'SEA' ? 'Sea Water Operations' : 'River Operations'}
+                  </Typography>
+                </Box> */}
               </Stack>
             </CardContent>
           </Card>
-
         </Grid>
-
-        
       </Grid>
 
       {/* Edit Barge Dialog */}
@@ -462,6 +503,7 @@ export default function BargeDetailsPage() {
           onClose={handleEditClose}
           barge={barge}
           mode="edit"
+          onSuccess={handleEditSuccess}
         />
       )}
     </Box>
