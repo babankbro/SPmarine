@@ -61,7 +61,12 @@ export function BargeForm({
   embedded = false 
 }: BargeFormProps) {
   const { createBarge, updateBarge, refreshData, isCreating, isUpdating, checkBargeExists } = useBarge();
-  const stations = useStation();
+  const {
+  data: stations,
+  isLoading: isStationsLoading,
+  isError: isStationsError,
+  error: stationsError
+} = useStation();
   const [formData, setFormData] = useState<BargeFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>('');

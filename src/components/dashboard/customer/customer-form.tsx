@@ -54,7 +54,12 @@ const initialFormData: CustomerFormData = {
 
 export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProps) {
   const { createCustomer, updateCustomer, refreshData, isCreating, isUpdating, checkCustomerExists } = useCustomer();
-  const stations = useStation();
+  const {
+  data: stations,
+  isLoading: isStationsLoading,
+  isError: isStationsError,
+  error: stationsError
+} = useStation();
   const [formData, setFormData] = useState<CustomerFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>('');

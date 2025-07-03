@@ -75,7 +75,12 @@ export function BargeFilters({
   totalCount = 0, 
   filteredCount = 0 
 }: BargeFiltersProps) {
-  const stations = useStation();
+  const {
+  data: stations,
+  isLoading: isStationsLoading,
+  isError: isStationsError,
+  error: stationsError
+} = useStation();
   const [localFilters, setLocalFilters] = useState<BargeFilters>(filters);
   const [isExpanded, setIsExpanded] = useState(false);
 

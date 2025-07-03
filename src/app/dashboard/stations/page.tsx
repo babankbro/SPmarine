@@ -16,8 +16,13 @@ export default function Page(): JSX.Element {
 	const [page, setPage] = useState(0);
 	const [rowsPerPage, setRowsPerPage] = useState(5);
 
-	const station: Station[] = useStation();
-	const paginatedBarges = applyPagination(station, page, rowsPerPage);
+	const {
+  data: stations,
+  isLoading: isStationsLoading,
+  isError: isStationsError,
+  error: stationsError
+} = useStation();
+	const paginatedBarges = applyPagination(stations, page, rowsPerPage);
 
 	const handleImport = () => {};
 
@@ -62,7 +67,7 @@ export default function Page(): JSX.Element {
 			</Stack>
 			{/* <CustomersFilters /> */}
 			<StationTable
-				count={station.length}
+				count={stations.length}
 				page={page}
 				rows={paginatedBarges}
 				rowsPerPage={rowsPerPage}
