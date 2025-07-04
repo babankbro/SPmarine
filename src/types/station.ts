@@ -5,6 +5,8 @@ export type Station = {
 	latitude: number;
 	longitude: number;
 	distanceKm: number;
+
+
 };
 
 export type CreateStationRequest  = {

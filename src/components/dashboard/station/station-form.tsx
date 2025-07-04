@@ -19,10 +19,18 @@ import {
   Divider,
   Alert,
   Chip,
+  Stack,
+  InputAdornment,
+  FormHelperText,
 } from "@mui/material";
-import dayjs from "dayjs";
+import {
+  Buildings as BuildingsIcon,
+  MapPin as LocationIcon,
+  Compass as CompassIcon,
+} from "@phosphor-icons/react/dist/ssr";
+
 import { useStation } from "@/hooks/use-station";
-import { Station, CreateStationRequest, UpdateStationRequest } from "@/types/station";
+import { Station, CreateStationRequest, UpdateStationRequest, StationFormData } from "@/types/station";
 
 interface StationFormProps {
   open: boolean;
@@ -34,24 +42,13 @@ interface StationFormProps {
   embedded?: boolean;
 }
 
-interface StationFormData {
-  id: string;
-  name: string;
-  type: 'SEA' | 'RIVER';
-  latitude: string;
-  longitude: string;
-  distanceKm: string;
-
-}
-
 const initialFormData: StationFormData = {
   id: '',
   name: '',
   type: 'SEA',
-  latitude: '',
-  longitude: '',
-  distanceKm: '',
- 
+  latitude: 0,
+  longitude: 0,
+  distanceKm: 0,
 };
 
 export function StationForm({ 
@@ -78,9 +75,9 @@ export function StationForm({
         id: station.id,
         name: station.name,
         type: station.type,
-        latitude: station.latitude?.toString() || '',
-        longitude: station.longitude?.toString() || '',
-        distanceKm: station.distanceKm?.toString() || '',
+        latitude: station.latitude || 0,
+        longitude: station.longitude|| 0,
+        distanceKm: Number(station.distanceKm)|| 0,
       });
       setIsIdValid(true);
       setHasIdBeenChecked(true);
@@ -97,6 +94,7 @@ export function StationForm({
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const value = event.target.value;
+    console.log(`Field changed: ${field}, Value: ${value}`);
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
@@ -186,24 +184,23 @@ export function StationForm({
     }
 
     // Coordinate validation
-    const lat = parseFloat(formData.latitude);
-    const lng = parseFloat(formData.longitude);
+    const lat = formData.latitude;
+    const lng = formData.longitude;
     
-    if (!formData.latitude.trim() || isNaN(lat) || lat < -90 || lat > 90) {
+    if (!formData.latitude || isNaN(lat) || lat < -90 || lat > 90) {
       newErrors.latitude = 'Valid latitude (-90 to 90) is required';
     }
     
-    if (!formData.longitude.trim() || isNaN(lng) || lng < -180 || lng > 180) {
+    if (!formData.longitude || isNaN(lng) || lng < -180 || lng > 180) {
       newErrors.longitude = 'Valid longitude (-180 to 180) is required';
     }
 
     // Distance validation
-    const distance = parseFloat(formData.distanceKm);
-    if (!formData.distanceKm.trim() || isNaN(distance) || distance < 0) {
+    const distance = Number(formData.distanceKm);
+    if (!formData.distanceKm || isNaN(distance) || distance < 0) {
       newErrors.distanceKm = 'Valid distance (0 or greater) is required';
     }
 
- 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0 && (mode === 'edit' || isIdValid);
   };
@@ -228,23 +225,22 @@ export function StationForm({
           id: formData.id.trim(),
           name: formData.name.trim(),
           type: formData.type,
-          latitude: parseFloat(formData.latitude),
-          longitude: parseFloat(formData.longitude),
-          distanceKm: parseFloat(formData.distanceKm),
-         
+          latitude: Number(formData.latitude),
+          longitude: Number(formData.longitude),
+          distanceKm: Number(formData.distanceKm),
         };
 
         await createStation(stationData);
       } else if (station) {
         const stationData: UpdateStationRequest = {
+          id: station.id, // ID remains unchanged in edit mode
           name: formData.name.trim(),
           type: formData.type,
-          latitude: parseFloat(formData.latitude),
-          longitude: parseFloat(formData.longitude),
-          distanceKm: parseFloat(formData.distanceKm),
-       
+          latitude: (formData.latitude),
+          longitude: (formData.longitude),
+          distanceKm: Number(formData.distanceKm),
         };
-
+        console.log('Updating fronted station with data: datafrom', formData, stationData, formData.distanceKm );
         await updateStation(station.id, stationData);
       }
 
@@ -284,9 +280,12 @@ export function StationForm({
       <Grid container spacing={3}>
         {/* Basic Information */}
         <Grid item xs={12}>
-          <Typography variant="h6" gutterBottom>
-            Basic Information
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <BuildingsIcon size={24} />
+            <Typography variant="h6" gutterBottom>
+              Basic Information
+            </Typography>
+          </Stack>
         </Grid>
 
         <Grid item xs={12} sm={6}>
@@ -299,6 +298,13 @@ export function StationForm({
             helperText={errors.id || (mode === 'create' ? 'Unique identifier for the station' : 'Station ID cannot be changed')}
             required
             disabled={mode === 'edit' || idCheckLoading}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <BuildingsIcon size={20} />
+                </InputAdornment>
+              ),
+            }}
           />
         </Grid>
 
@@ -322,20 +328,31 @@ export function StationForm({
               onChange={handleSelectChange('type')}
               label="Station Type"
             >
-              <MenuItem value="SEA">Sea Station</MenuItem>
-              <MenuItem value="RIVER">River Station</MenuItem>
+              <MenuItem value="SEA">
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Chip label="SEA" color="primary" size="small" />
+                  <span>Sea Station</span>
+                </Stack>
+              </MenuItem>
+              <MenuItem value="RIVER">
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Chip label="RIVER" color="secondary" size="small" />
+                  <span>River Station</span>
+                </Stack>
+              </MenuItem>
             </Select>
           </FormControl>
         </Grid>
 
-     
-
         {/* Location Information */}
         <Grid item xs={12}>
           <Divider sx={{ my: 1 }} />
-          <Typography variant="h6" gutterBottom>
-            Location Information
-          </Typography>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <LocationIcon size={24} />
+            <Typography variant="h6" gutterBottom>
+              Location Information
+            </Typography>
+          </Stack>
         </Grid>
 
         <Grid item xs={12} sm={4}>
@@ -349,6 +366,14 @@ export function StationForm({
             helperText={errors.latitude}
             required
             inputProps={{ step: "any", min: -90, max: 90 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <CompassIcon size={20} />
+                </InputAdornment>
+              ),
+              endAdornment: <InputAdornment position="end">°</InputAdornment>,
+            }}
           />
         </Grid>
 
@@ -363,13 +388,16 @@ export function StationForm({
             helperText={errors.longitude}
             required
             inputProps={{ step: "any", min: -180, max: 180 }}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">°</InputAdornment>,
+            }}
           />
         </Grid>
 
         <Grid item xs={12} sm={4}>
           <TextField
             fullWidth
-            label="Distance (km)"
+            label="Distance from River Bar (km)"
             type="number"
             value={formData.distanceKm}
             onChange={handleInputChange('distanceKm')}
@@ -377,26 +405,23 @@ export function StationForm({
             helperText={errors.distanceKm}
             required
             inputProps={{ step: "any", min: 0 }}
+            InputProps={{
+              endAdornment: <InputAdornment position="end">km</InputAdornment>,
+            }}
           />
         </Grid>
 
-        {/* Additional Information */}
+        {/* Form Summary */}
         <Grid item xs={12}>
           <Divider sx={{ my: 1 }} />
-          <Typography variant="h6" gutterBottom>
-            Additional Information
-          </Typography>
+          <Alert severity="info" sx={{ mt: 2 }}>
+            <Typography variant="body2">
+              <strong>Summary:</strong> {mode === 'create' ? 'Creating' : 'Updating'} {formData.type} station 
+              at coordinates {formData.latitude || '0'}°, {formData.longitude || '0'}° 
+              with distance {formData.distanceKm || '0'} km.
+            </Typography>
+          </Alert>
         </Grid>
-
-        {/* Dates */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 1 }} />
-          <Typography variant="h6" gutterBottom>
-            Important Dates
-          </Typography>
-        </Grid>
-
-        
       </Grid>
     </>
   );
@@ -435,7 +460,18 @@ export function StationForm({
       }}
     >
       <DialogTitle>
-        {mode === 'create' ? 'Create New Station' : 'Edit Station'}
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <BuildingsIcon size={28} />
+          <Typography variant="h5">
+            {mode === 'create' ? 'Create New Station' : 'Edit Station'}
+          </Typography>
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {mode === 'create' 
+            ? 'Add a new station to your network with complete location details' 
+            : 'Update station information and location details'
+          }
+        </Typography>
       </DialogTitle>
       
       <DialogContent dividers sx={{ p: 3 }}>
