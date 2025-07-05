@@ -7,54 +7,63 @@ import axios from "axios";
 import { Order, CreateOrderRequest, UpdateOrderRequest } from "@/types/order";
 import { Station } from "@/types/station";
 
-// API Configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// API Configuration - Updated to match backend
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:18001';
+const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
+const ORDERS_ENDPOINT = `${API_BASE_URL}/${API_VERSION}/orders`;
+const STATIONS_ENDPOINT = `${API_BASE_URL}/${API_VERSION}/stations`;
 
 const orderApi = {
   // Get all orders
   getAll: async (): Promise<Order[]> => {
-    const response = await axios.get(`${API_BASE_URL}/orders`);
+    const response = await axios.get(ORDERS_ENDPOINT);
     return response.data;
   },
 
   // Get order by ID
   getById: async (id: string): Promise<Order> => {
-    const response = await axios.get(`${API_BASE_URL}/orders/${id}`);
+    const response = await axios.get(`${ORDERS_ENDPOINT}/${id}`);
     return response.data;
   },
 
   // Create new order
   create: async (order: CreateOrderRequest): Promise<Order> => {
-    const response = await axios.post(`${API_BASE_URL}/orders`, order);
-    return response.data;
+    const response = await axios.post(ORDERS_ENDPOINT, order);
+    return response.data.data || response.data;
   },
 
   // Update existing order
   update: async (id: string, order: UpdateOrderRequest): Promise<Order> => {
-    const response = await axios.put(`${API_BASE_URL}/orders/${id}`, order);
-    return response.data;
+    const response = await axios.put(`${ORDERS_ENDPOINT}/${id}`, order);
+    return response.data.data || response.data;
   },
 
   // Delete order
   delete: async (id: string): Promise<void> => {
-    await axios.delete(`${API_BASE_URL}/orders/${id}`);
+    await axios.delete(`${ORDERS_ENDPOINT}/${id}`);
   },
 
   // Check if order exists
   exists: async (id: string): Promise<boolean> => {
     try {
-      await axios.head(`${API_BASE_URL}/orders/${id}`);
-      return true;
+      const response = await axios.get(`${ORDERS_ENDPOINT}/${id}/exists`);
+      return response.data.exists;
     } catch (error) {
       return false;
     }
+  },
+
+  // Get order statistics
+  getStatistics: async (): Promise<any> => {
+    const response = await axios.get(`${ORDERS_ENDPOINT}/statistics`);
+    return response.data.data;
   },
 };
 
 // Station API for order form
 const stationApi = {
   getAll: async (): Promise<Station[]> => {
-    const response = await axios.get(`${API_BASE_URL}/stations`);
+    const response = await axios.get(STATIONS_ENDPOINT);
     return response.data;
   },
 };
@@ -104,6 +113,14 @@ export function OrderProvider({ children }: OrderProviderProps) {
     queryFn: orderApi.getAll,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: any) => {
+      // Don't retry on 404 or authentication errors
+      if (error?.response?.status === 404 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
   // Create order mutation
@@ -282,6 +299,12 @@ export function useStations(): Station[] {
     queryFn: stationApi.getAll,
     staleTime: 10 * 60 * 1000, // 10 minutes (stations don't change often)
     gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.response?.status === 404 || error?.response?.status === 401) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
 
   return stations || [];
