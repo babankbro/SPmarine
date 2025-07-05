@@ -50,8 +50,8 @@ interface OrderFormProps {
 const initialFormData: OrderFormData = {
   id: '',
   type: 'EXPORT',
-  fromPoint: '',
-  destPoint: '',
+  fromEntityId: '',
+  destEntityId: '',
   startStationId: '',
   destStationId: '',
   productName: '',
@@ -99,8 +99,8 @@ export function OrderForm({
       setFormData({
         id: order.id,
         type: order.type,
-        fromPoint: order.fromPoint,
-        destPoint: order.destPoint,
+        fromEntityId: order.fromEntityId,
+        destEntityId: order.destEntityId,
         startStationId: order.startStationId,
         destStationId: order.destStationId,
         productName: order.productName,
@@ -237,12 +237,12 @@ export function OrderForm({
       newErrors.productName = 'Product name is required';
     }
 
-    if (!formData.fromPoint.trim()) {
-      newErrors.fromPoint = 'From point is required';
+    if (!formData.fromEntityId) {
+      newErrors.fromEntityId = 'Origin point is required';
     }
 
-    if (!formData.destPoint.trim()) {
-      newErrors.destPoint = 'Destination point is required';
+    if (!formData.destEntityId) {
+      newErrors.destEntityId = 'Destination point is required';
     }
 
     if (!formData.startStationId) {
@@ -303,8 +303,8 @@ export function OrderForm({
         const orderData: CreateOrderRequest = {
           id: formData.id.trim(),
           type: formData.type,
-          fromPoint: formData.fromPoint.trim(),
-          destPoint: formData.destPoint.trim(),
+          fromEntityId: formData.fromEntityId?.trim()|| '',
+          destEntityId: formData.destEntityId?.trim()|| '',
           startStationId: formData.startStationId,
           destStationId: formData.destStationId,
           productName: formData.productName.trim(),
@@ -332,8 +332,8 @@ export function OrderForm({
       } else if (order) {
         const orderData: UpdateOrderRequest = {
           type: formData.type,
-          fromPoint: formData.fromPoint.trim(),
-          destPoint: formData.destPoint.trim(),
+          fromEntityId: formData.fromEntityId?.trim()|| '',
+          destEntityId: formData.destEntityId?.trim()|| '',
           startStationId: formData.startStationId,
           destStationId: formData.destStationId,
           productName: formData.productName.trim(),
@@ -478,8 +478,8 @@ export function OrderForm({
           <TextField
             fullWidth
             label="From Point"
-            value={formData.fromPoint}
-            onChange={handleInputChange('fromPoint')}
+            value={formData.fromEntityId|| ''}
+            onChange={handleInputChange('fromEntityId')}
             error={!!errors.fromPoint}
             helperText={errors.fromPoint || 'Origin location'}
             required
@@ -490,8 +490,8 @@ export function OrderForm({
           <TextField
             fullWidth
             label="Destination Point"
-            value={formData.destPoint}
-            onChange={handleInputChange('destPoint')}
+            value={formData.fromEntityId|| ''}
+            onChange={handleInputChange('destEntityId')}
             error={!!errors.destPoint}
             helperText={errors.destPoint || 'Final destination'}
             required

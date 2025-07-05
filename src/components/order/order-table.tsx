@@ -41,6 +41,9 @@ import {
 import { useSelection } from "@/hooks/use-selection";
 import { Order } from "@/types/order";
 import { useOrderContext } from "@/contexts/order-context";
+import { useStation } from "@/hooks/use-station";
+import { useCustomer } from "@/hooks/use-customer";
+import { useCarrier } from "@/hooks/use-carrier";
 
 interface OrderTableProps {
   count: number;
@@ -88,6 +91,8 @@ function formatDateTime(dateTime: string | Date): string {
   });
 }
 
+
+
 export function OrderTable({
   count,
   page,
@@ -100,6 +105,10 @@ export function OrderTable({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const { getStationById } = useStation();
+  const { getCustomerById } = useCustomer();
+  const { getCarrierById } = useCarrier();
+  
 
   // Use OrderContext for delete operations
   const { deleteOrder, refetch } = useOrderContext();
@@ -178,7 +187,7 @@ export function OrderTable({
                   />
                 </TableCell>
                 <TableCell>Order</TableCell>
-                <TableCell>Route & Stations</TableCell>
+                <TableCell>Start-End Points & Stations</TableCell>
                 <TableCell>Demand & Rate</TableCell>
                 <TableCell>Schedule</TableCell>
                 <TableCell>Status</TableCell>
@@ -233,11 +242,11 @@ export function OrderTable({
                       <Stack spacing={0.5}>
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <Typography variant="body2" fontWeight="medium">
-                            {row.fromPoint}
+                            {row.fromEntityId}
                           </Typography>
                           <ArrowRightIcon size={16} />
                           <Typography variant="body2" fontWeight="medium">
-                            {row.destPoint}
+                            {row.destEntityId}
                           </Typography>
                         </Stack>
                         <Typography variant="caption" color="text.secondary">

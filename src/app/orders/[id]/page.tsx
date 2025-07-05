@@ -368,7 +368,7 @@ export default function OrderDetailsPage() {
                    From Point
                  </Typography>
                  <Typography variant="body1" fontWeight="medium">
-                   {order.fromPoint}
+                   {order.fromEntityId}
                  </Typography>
                </Box>
                
@@ -377,7 +377,7 @@ export default function OrderDetailsPage() {
                    Destination Point
                  </Typography>
                  <Typography variant="body1" fontWeight="medium">
-                   {order.destPoint}
+                   {order.destEntityId}
                  </Typography>
                </Box>
                

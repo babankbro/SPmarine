@@ -23,7 +23,7 @@ import { useTugboat } from "@/hooks/use-tugboat";
 export default function Page(): React.JSX.Element {
 	const data = useOrder();
 	// const tugboat = useTugboat();
-	const { tugboat } = useTugboat();
+	const { data:tugboat } = useTugboat();
 
 	if (!tugboat) return <></>;
 

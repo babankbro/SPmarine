@@ -56,6 +56,8 @@ export default function OrdersPage() {
     sortOrder: 'desc',
   });
 
+  console.log('OrdersPage rendered with filters:', orders);
+
   // Filter and sort orders
   const filteredOrders = useMemo(() => {
     if (!orders) return [];
@@ -67,8 +69,8 @@ export default function OrdersPage() {
       const searchLower = filters.search.toLowerCase();
       filtered = filtered.filter(order => 
         order.productName.toLowerCase().includes(searchLower) ||
-        order.fromPoint.toLowerCase().includes(searchLower) ||
-        order.destPoint.toLowerCase().includes(searchLower) ||
+        order.fromEntityId.toLowerCase().includes(searchLower) ||
+        order.destEntityId.toLowerCase().includes(searchLower) ||
         order.id.toLowerCase().includes(searchLower)
       );
     }

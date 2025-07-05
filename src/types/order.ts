@@ -4,8 +4,8 @@ import { Station } from "./station";
 export interface Order {
   id: string;
   type: 'IMPORT' | 'EXPORT';
-  fromPoint: string;
-  destPoint: string;
+  fromEntityId: string;
+  destEntityId: string;
   startStationId: string;
   destStationId: string;
   productName: string;
@@ -35,8 +35,8 @@ export interface Order {
 export interface CreateOrderRequest {
   id?: string; // Made optional since backend can generate it
   type: 'IMPORT' | 'EXPORT';
-  fromPoint: string;
-  destPoint: string;
+  fromEntityId: string;
+  destEntityId: string;
   startStationId: string;
   destStationId: string;
   productName: string;
@@ -63,8 +63,8 @@ export interface CreateOrderRequest {
 export interface UpdateOrderRequest {
   name?: string;
   type?: 'IMPORT' | 'EXPORT';
-  fromPoint?: string;
-  destPoint?: string;
+  fromEntityId?: string;
+  destEntityId?: string;
   startStationId?: string;
   destStationId?: string;
   productName?: string;
@@ -91,8 +91,8 @@ export interface UpdateOrderRequest {
 export interface OrderFormData {
   id: string;
   type: 'IMPORT' | 'EXPORT';
-  fromPoint: string;
-  destPoint: string;
+  fromEntityId?: string;
+  destEntityId?: string;
   startStationId: string;
   destStationId: string;
   productName: string;
