@@ -41,9 +41,8 @@ import {
 import { useSelection } from "@/hooks/use-selection";
 import { Order } from "@/types/order";
 import { useOrderContext } from "@/contexts/order-context";
-import { useStation } from "@/hooks/use-station";
-import { useCustomer } from "@/hooks/use-customer";
-import { useCarrier } from "@/hooks/use-carrier";
+import { useEntityNames } from "@/hooks/use-entity-names";
+
 
 interface OrderTableProps {
   count: number;
@@ -105,13 +104,15 @@ export function OrderTable({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { getStationById } = useStation();
-  const { getCustomerById } = useCustomer();
-  const { getCarrierById } = useCarrier();
   
-
-  // Use OrderContext for delete operations
   const { deleteOrder, refetch } = useOrderContext();
+  const { 
+    getStationName, 
+    getCustomerName, 
+    getCarrierName, 
+    getStationInfo,
+    isLoading: isNamesLoading 
+  } = useEntityNames();
 
   const rowIds = useMemo(() => {
     return rows.map((order) => order.id);
@@ -187,7 +188,7 @@ export function OrderTable({
                   />
                 </TableCell>
                 <TableCell>Order</TableCell>
-                <TableCell>Start-End Points & Stations</TableCell>
+                <TableCell>Route & Stations</TableCell>
                 <TableCell>Demand & Rate</TableCell>
                 <TableCell>Schedule</TableCell>
                 <TableCell>Status</TableCell>
@@ -198,6 +199,8 @@ export function OrderTable({
               {rows.map((row) => {
                 const isSelected = selected?.has(row.id);
                 const statusInfo = getOrderStatus(row);
+                const startStationInfo = getStationInfo(row.startStationId);
+                const destStationInfo = getStationInfo(row.destStationId);
 
                 return (
                   <TableRow hover key={row.id} selected={isSelected}>
@@ -237,21 +240,58 @@ export function OrderTable({
                       </Stack>
                     </TableCell>
 
-                    {/* Route & Stations Column */}
+                    {/* Enhanced Route & Stations Column */}
                     <TableCell>
-                      <Stack spacing={0.5}>
+                      <Stack spacing={1}>
+                        {/* From/To Points (Customer/Carrier Names) */}
                         <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography variant="body2" fontWeight="medium">
-                            {row.fromEntityId}
+                          <Typography variant="body2" fontWeight="medium" color="primary">
+                            { row.type === 'IMPORT' ? getCarrierName(row.fromEntityId) : getCustomerName(row.fromEntityId)}
                           </Typography>
-                          <ArrowRightIcon size={16} />
-                          <Typography variant="body2" fontWeight="medium">
-                            {row.destEntityId}
+                          <ArrowRightIcon size={14} />
+                          <Typography variant="body2" fontWeight="medium" color="secondary">
+                            { row.type === 'IMPORT' ? getCustomerName(row.destEntityId) : getCarrierName(row.destEntityId)}
                           </Typography>
                         </Stack>
-                        <Typography variant="caption" color="text.secondary">
-                          {row.startStationId} → {row.destStationId}
-                        </Typography>
+                        
+                        {/* Station Names with Type Indicators */}
+                        <Stack spacing={0.5}>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Typography variant="caption" color="text.secondary">
+                              From:
+                            </Typography>
+                            <Typography variant="caption" fontWeight="medium">
+                              {getStationName(row.startStationId)}
+                            </Typography>
+                            {startStationInfo && (
+                              <Chip
+                                label={startStationInfo.type}
+                                color={startStationInfo.type === 'SEA' ? 'primary' : 'secondary'}
+                                size="small"
+                                variant="outlined"
+                                sx={{ height: 16, fontSize: '0.625rem' }}
+                              />
+                            )}
+                          </Stack>
+                          
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Typography variant="caption" color="text.secondary">
+                              To:
+                            </Typography>
+                            <Typography variant="caption" fontWeight="medium">
+                              {getStationName(row.destStationId)}
+                            </Typography>
+                            {destStationInfo && (
+                              <Chip
+                                label={destStationInfo.type}
+                                color={destStationInfo.type === 'SEA' ? 'primary' : 'secondary'}
+                                size="small"
+                                variant="outlined"
+                                sx={{ height: 16, fontSize: '0.625rem' }}
+                              />
+                            )}
+                          </Stack>
+                        </Stack>
                       </Stack>
                     </TableCell>
 

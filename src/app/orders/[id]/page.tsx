@@ -34,6 +34,7 @@ import { useOrderContext } from "@/contexts/order-context";
 import { OrderForm } from "@/components/order/order-form";
 import { Order } from "@/types/order";
 import { paths } from "@/paths";
+import { useEntityNames } from "@/hooks/use-entity-names";
 
 export default function OrderDetailsPage() {
   const params = useParams();
@@ -47,6 +48,15 @@ export default function OrderDetailsPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState<string>('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+
+   // Use the extracted entity names hook
+  const { 
+    getStationName, 
+    getCustomerName, 
+    getCarrierName, 
+    getStationInfo,
+    isLoading: isNamesLoading 
+  } = useEntityNames();
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -358,7 +368,7 @@ export default function OrderDetailsPage() {
            <CardContent>
              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                <LocationIcon size={24} />
-               <Typography variant="h6">Route Information</Typography>
+               <Typography variant="h6">Start-End Point Information</Typography>
              </Stack>
              <Divider sx={{ mb: 2 }} />
              
@@ -368,7 +378,8 @@ export default function OrderDetailsPage() {
                    From Point
                  </Typography>
                  <Typography variant="body1" fontWeight="medium">
-                   {order.fromEntityId}
+                     { "(" + order.fromEntityId + ") " + (order.type === 'IMPORT' ? 
+                     getCarrierName(order.fromEntityId) : getCustomerName(order.fromEntityId))}
                  </Typography>
                </Box>
                
@@ -377,7 +388,8 @@ export default function OrderDetailsPage() {
                    Destination Point
                  </Typography>
                  <Typography variant="body1" fontWeight="medium">
-                   {order.destEntityId}
+                   {"(" + order.destEntityId + ") " + (order.type === 'IMPORT' ? getCustomerName(order.destEntityId) : getCarrierName(order.destEntityId))}
+              
                  </Typography>
                </Box>
                
@@ -386,7 +398,7 @@ export default function OrderDetailsPage() {
                    Start Station ID
                  </Typography>
                  <Typography variant="body1" fontWeight="medium">
-                   {order.startStationId}
+                   { "(" + order.startStationId + ") " + getStationName(order.startStationId) }
                  </Typography>
                </Box>
                
@@ -395,7 +407,8 @@ export default function OrderDetailsPage() {
                    Destination Station ID
                  </Typography>
                  <Typography variant="body1" fontWeight="medium">
-                   {order.destStationId}
+              
+                   { "(" + order.destStationId + ") " + getStationName(order.destStationId) }
                  </Typography>
                </Box>
              </Stack>
