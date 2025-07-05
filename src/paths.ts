@@ -16,7 +16,7 @@ export const paths = {
 		tugboatScheduleResult: "/dashboard/tugboat-schedule-result",
 		tugboatScheduleTimeline: "/dashboard/tugboat-schedule-timeline",
 	},
-	order: "/orders",
+	orders: "/orders",
 	errors: { notFound: "/errors/not-found" },
 
 } as const;

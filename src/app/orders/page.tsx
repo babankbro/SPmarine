@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Box,
   Button,
@@ -11,7 +12,6 @@ import {
   Select,
   MenuItem,
   Stack,
-  SvgIcon,
   Typography,
   InputAdornment,
   Chip,
@@ -23,7 +23,8 @@ import {
   MagnifyingGlass as SearchIcon,
   FunnelSimple as FilterIcon,
   Download as ExportIcon,
-  Calendar as CalendarIcon  // Add this line
+  Upload as ImportIcon,
+  Calendar as CalendarIcon
 } from "@phosphor-icons/react/dist/ssr";
 
 import { useOrderContext } from "@/contexts/order-context";
@@ -31,6 +32,7 @@ import { OrderTable } from "@/components/order/order-table";
 import { OrderForm } from "@/components/order/order-form";
 import { Order } from "@/types/order";
 import { ScheduleOperationDialog } from "@/components/order/schedule-operation-dialog";
+import { paths } from "@/paths";
 
 interface FilterState {
   search: string;
@@ -43,7 +45,7 @@ interface FilterState {
 export default function OrdersPage() {
   const { data: orders, isLoading, isError, error, refetch } = useOrderContext();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false); // Add this line
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState<FilterState>({
@@ -101,13 +103,11 @@ export default function OrdersPage() {
       let aValue: any = a[filters.sortBy as keyof Order];
       let bValue: any = b[filters.sortBy as keyof Order];
 
-      // Handle date sorting
       if (filters.sortBy.includes('DateTime')) {
         aValue = new Date(aValue).getTime();
         bValue = new Date(bValue).getTime();
       }
       
-      // Handle string sorting
       if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
@@ -129,9 +129,9 @@ export default function OrdersPage() {
     return filteredOrders.slice(startIndex, startIndex + rowsPerPage);
   }, [filteredOrders, page, rowsPerPage]);
 
-  // Get status counts for display
+  // Get status counts
   const statusCounts = useMemo(() => {
-    if (!orders) return { total: 0, scheduled: 0, inProgress: 0, overdue: 0 };
+    if (!orders) return { total: 0, scheduled: 0, inProgress: 0, overdue: 0, import: 0, export: 0 };
 
     const now = new Date();
     const counts = {
@@ -139,6 +139,8 @@ export default function OrdersPage() {
       scheduled: 0,
       inProgress: 0,
       overdue: 0,
+      import: 0,
+      export: 0,
     };
 
     orders.forEach(order => {
@@ -151,6 +153,12 @@ export default function OrdersPage() {
         counts.inProgress++;
       } else {
         counts.overdue++;
+      }
+
+      if (order.type === 'IMPORT') {
+        counts.import++;
+      } else {
+        counts.export++;
       }
     });
 
@@ -171,7 +179,7 @@ export default function OrdersPage() {
   ) => {
     const value = event.target.value;
     setFilters(prev => ({ ...prev, [field]: value }));
-    setPage(0); // Reset to first page when filtering
+    setPage(0);
   };
 
   const handleCreateSuccess = () => {
@@ -180,7 +188,6 @@ export default function OrdersPage() {
   };
 
   const handleOrderDeleted = (deletedOrderId: string) => {
-    // Handle pagination if current page becomes empty
     const newTotalItems = filteredOrders.length - 1;
     const maxPage = Math.max(0, Math.ceil(newTotalItems / rowsPerPage) - 1);
     if (page > maxPage) {
@@ -197,6 +204,14 @@ export default function OrdersPage() {
       sortOrder: 'desc',
     });
     setPage(0);
+  };
+
+  const handleImport = () => {
+    console.log('Import orders from CSV');
+  };
+
+  const handleExport = () => {
+    console.log('Export orders to CSV');
   };
 
   if (isError) {
@@ -223,63 +238,85 @@ export default function OrdersPage() {
           <Stack direction="row" spacing={2}>
             <Chip 
               label={`Total: ${statusCounts.total} orders`}
-			  color="primary" 
+              color="primary" 
               size="small" 
             />
-           
+            <Chip 
+              label={`Import: ${statusCounts.import}`}
+              color="info" 
+              size="small" 
+            />
+            <Chip 
+              label={`Export: ${statusCounts.export}`}
+              color="secondary" 
+              size="small" 
+            />
+            <Chip 
+              label={`In Progress: ${statusCounts.inProgress}`}
+              color="warning" 
+              size="small" 
+            />
+            <Chip 
+              label={`Overdue: ${statusCounts.overdue}`}
+              color="error" 
+              size="small" 
+            />
           </Stack>
         </Box>
 
-		{/* Center - Operate Schedule Button */}
-		<Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
-			<Button
-			startIcon={<CalendarIcon size={20} />}
-			variant="outlined"
-			color="secondary"
-      backgroundColor="warning"
-			size="large"
-			onClick={() => {
-				// Handle operate schedule action
-				console.log('Operate Schedule clicked');
-        setScheduleDialogOpen(true);
-				// You can add your schedule operation logic here
-			}}
-			disabled={isLoading}
-			sx={{
-				borderRadius: 2,
-				px: 4,
-				py: 1.5,
-				fontSize: '1rem',
-				fontWeight: 600,
-				textTransform: 'none',
-				boxShadow: 1,
-        backgroundColor: '#ff9800', // Orange background
-        color: 'white',             // White text for contrast
-				'&:hover': {
-				boxShadow: 2,
-				transform: 'translateY(-1px)',
-         color: '#ff9800',  
-				},
-				transition: 'all 0.2s ease-in-out',
-			}}
-			>
-			Operate Schedule
-			</Button>
-		</Box>
+        {/* Center - Operate Schedule Button */}
+        <Box sx={{ display: 'flex', justifyContent: 'center', flex: 1 }}>
+          <Button
+            startIcon={<CalendarIcon size={20} />}
+            variant="outlined"
+            color="secondary"
+            size="large"
+            onClick={() => setScheduleDialogOpen(true)}
+            disabled={isLoading}
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              fontSize: '1rem',
+              fontWeight: 600,
+              textTransform: 'none',
+              boxShadow: 1,
+              backgroundColor: '#ff9800',
+              color: 'white',
+              '&:hover': {
+                boxShadow: 2,
+                transform: 'translateY(-1px)',
+                color: '#ff9800',  
+              },
+              transition: 'all 0.2s ease-in-out',
+            }}
+          >
+            Operate Schedule
+          </Button>
+        </Box>
 
-        
         <Stack direction="row" spacing={2}>
+          <Button
+            startIcon={<ImportIcon size={20} />}
+            variant="outlined"
+            onClick={handleImport}
+            disabled={isLoading}
+          >
+            Import
+          </Button>
           <Button
             startIcon={<ExportIcon size={20} />}
             variant="outlined"
             disabled={isLoading || filteredOrders.length === 0}
+            onClick={handleExport}
           >
             Export
           </Button>
           <Button
+            component={Link}
+            href={`${paths.orders}/new`}
             startIcon={<PlusIcon size={20} />}
             variant="contained"
-            onClick={() => setCreateDialogOpen(true)}
             disabled={isLoading}
           >
             Create Order
@@ -329,7 +366,19 @@ export default function OrdersPage() {
               </Select>
             </FormControl>
 
-            
+            <FormControl sx={{ minWidth: 150 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filters.status}
+                label="Status"
+                onChange={handleFilterChange('status')}
+              >
+                <MenuItem value="">All Status</MenuItem>
+                <MenuItem value="scheduled">Scheduled</MenuItem>
+                <MenuItem value="in-progress">In Progress</MenuItem>
+                <MenuItem value="overdue">Overdue</MenuItem>
+              </Select>
+            </FormControl>
 
             <FormControl sx={{ minWidth: 150 }}>
               <InputLabel>Sort By</InputLabel>
@@ -393,9 +442,10 @@ export default function OrdersPage() {
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
         mode="create"
+        onSuccess={handleCreateSuccess}
       />
 
-      {/* Schedule Operation Dialog - Add this */}
+      {/* Schedule Operation Dialog */}
       <ScheduleOperationDialog
         open={scheduleDialogOpen}
         onClose={() => setScheduleDialogOpen(false)}

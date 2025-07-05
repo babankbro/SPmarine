@@ -104,9 +104,9 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 	const [totalTime, setTotalTime] = useState(0);
 	const [totalWeight, setTotalWeight] = useState(0);
 	// const tugboatList: Tugboat[] = useTugboat();
-	const { tugboat: tugboatList } = useTugboat();
-	const orderList = useOrder();
-
+	const { data: tugboatList } = useTugboat();
+	//const orderList = useOrder();
+	const { data: orderList } = useOrder();
 	if (!tugboatList) return <></>;
 	if (!costs) return <></>;
 

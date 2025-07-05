@@ -1,3 +1,4 @@
+// src/components/order/order-table.tsx
 "use client";
 
 import RouterLink from "next/link";
@@ -16,7 +17,10 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  DialogContentText
+  DialogContentText,
+  Chip,
+  Stack,
+  Avatar
 } from "@mui/material";
 import { 
   Table, 
@@ -26,14 +30,17 @@ import {
   TableCell, 
   TablePagination 
 } from "@mui/material";
-import { ArrowRight as ArrowRightIcon } from "@phosphor-icons/react/dist/ssr";
-import { Trash as TrashIcon } from "@phosphor-icons/react/dist/ssr";
-import { BoxArrowUp } from "@phosphor-icons/react/dist/ssr";
-import { BoxArrowDown } from "@phosphor-icons/react/dist/ssr";
+import { 
+  Trash as TrashIcon,
+  PencilSimple as EditIcon,
+  ArrowRight as ArrowRightIcon,
+  Package as PackageIcon,
+  Calendar as CalendarIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { useSelection } from "@/hooks/use-selection";
 import { Order } from "@/types/order";
-import { OrderContext } from "@/contexts/order-context";
+import { useOrderContext } from "@/contexts/order-context";
 
 interface OrderTableProps {
   count: number;
@@ -43,6 +50,42 @@ interface OrderTableProps {
   onPageChange: (event: unknown, newPage: number) => void;
   onRowsPerPageChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
   onOrderDeleted?: (deletedOrderId: string) => void;
+}
+
+function OrderAvatar({ order }: { order: Order }) {
+  const getAvatarColor = (type: string) => {
+    return type === 'IMPORT' ? 'primary.main' : 'secondary.main';
+  };
+  
+  return (
+    <Avatar sx={{ width: 40, height: 40, bgcolor: getAvatarColor(order.type) }}>
+      <PackageIcon size={20} />
+    </Avatar>
+  );
+}
+
+function getOrderStatus(order: Order): { status: string; color: 'success' | 'warning' | 'error' } {
+  const now = new Date();
+  const startDate = new Date(order.startDateTime);
+  const dueDate = new Date(order.dueDateTime);
+  
+  if (dueDate < now) {
+    return { status: 'Overdue', color: 'error' };
+  } else if (startDate <= now && dueDate >= now) {
+    return { status: 'In Progress', color: 'warning' };
+  } else {
+    return { status: 'Scheduled', color: 'success' };
+  }
+}
+
+function formatDateTime(dateTime: string | Date): string {
+  const date = typeof dateTime === 'string' ? new Date(dateTime) : dateTime;
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 export function OrderTable({
@@ -58,8 +101,8 @@ export function OrderTable({
   const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Use OrderContext for delete operations instead of direct axios
-  const { deleteById, refetch } = useContext(OrderContext);
+  // Use OrderContext for delete operations
+  const { deleteOrder, refetch } = useOrderContext();
 
   const rowIds = useMemo(() => {
     return rows.map((order) => order.id);
@@ -77,8 +120,7 @@ export function OrderTable({
   const handleDeleteConfirm = async () => {
     if (!orderToDelete) return;
 
-    // Check if deleteById function is available from context
-    if (!deleteById) {
+    if (!deleteOrder) {
       console.error('Delete function not available from OrderContext');
       alert('Delete functionality is not available');
       return;
@@ -86,16 +128,12 @@ export function OrderTable({
 
     setIsDeleting(true);
     try {
-      // Use OrderContext deleteById method instead of direct axios call
-      await deleteById(orderToDelete);
+      await deleteOrder(orderToDelete);
       
-      // Call the callback to notify parent component
       if (onOrderDeleted) {
         onOrderDeleted(orderToDelete);
       }
 
-      // The OrderContext deleteById already handles refetch internally
-      // But we can call it again to ensure fresh data
       if (refetch) {
         await refetch();
       }
@@ -117,6 +155,12 @@ export function OrderTable({
     setOrderToDelete(null);
   };
 
+  const getOrderToDeleteName = () => {
+    if (!orderToDelete) return '';
+    const order = rows.find(o => o.id === orderToDelete);
+    return order?.productName || orderToDelete;
+  };
+
   return (
     <>
       <Card>
@@ -133,16 +177,18 @@ export function OrderTable({
                     }}
                   />
                 </TableCell>
-                <TableCell>Product</TableCell>
-                <TableCell>Route</TableCell>
-                <TableCell>Demand</TableCell>
-                <TableCell>Type</TableCell>
+                <TableCell>Order</TableCell>
+                <TableCell>Route & Stations</TableCell>
+                <TableCell>Demand & Rate</TableCell>
+                <TableCell>Schedule</TableCell>
+                <TableCell>Status</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {rows.map((row) => {
                 const isSelected = selected?.has(row.id);
+                const statusInfo = getOrderStatus(row);
 
                 return (
                   <TableRow hover key={row.id} selected={isSelected}>
@@ -154,38 +200,115 @@ export function OrderTable({
                         }}
                       />
                     </TableCell>
+
+                    {/* Order Info Column */}
                     <TableCell>
-                      <Box component={RouterLink} href={`orders/${row.id}`}>
-                        <Link>
-                          <Typography variant="subtitle2">{row.productName}</Typography>
-                        </Link>
-                      </Box>
+                      <Stack direction="row" alignItems="center" spacing={2}>
+                        <OrderAvatar order={row} />
+                        <Box>
+                          <Box component={RouterLink} href={`/orders/${row.id}`}>
+                            <Link>
+                              <Typography variant="subtitle2" fontWeight="medium">
+                                {row.productName}
+                              </Typography>
+                            </Link>
+                          </Box>
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <Typography variant="caption" color="text.secondary">
+                              ID: {row.id}
+                            </Typography>
+                            <Chip
+                              label={row.type}
+                              color={row.type === 'IMPORT' ? 'primary' : 'secondary'}
+                              size="small"
+                              variant="outlined"
+                            />
+                          </Stack>
+                        </Box>
+                      </Stack>
                     </TableCell>
+
+                    {/* Route & Stations Column */}
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {row.fromPoint} 
-                        <ArrowRightIcon size={12} /> 
-                        {row.destPoint}
-                      </Box>
+                      <Stack spacing={0.5}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="body2" fontWeight="medium">
+                            {row.fromPoint}
+                          </Typography>
+                          <ArrowRightIcon size={16} />
+                          <Typography variant="body2" fontWeight="medium">
+                            {row.destPoint}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary">
+                          {row.startStationId} → {row.destStationId}
+                        </Typography>
+                      </Stack>
                     </TableCell>
-                    <TableCell>{row.demand}</TableCell>
+
+                    {/* Demand & Rate Column */}
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        {row.type}
-                        {row.type === 'import' ? <BoxArrowDown size={16} /> : <BoxArrowUp size={16} />}
-                      </Box>
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2">
+                          Demand: {row.demand.toLocaleString()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Rate: {row.loadingRate.toLocaleString()}/hr
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Est: {Math.ceil(row.demand / row.loadingRate)}h
+                        </Typography>
+                      </Stack>
                     </TableCell>
+
+                    {/* Schedule Column */}
                     <TableCell>
-                      <Tooltip title="Delete Order">
-                        <IconButton 
-                          color="error" 
-                          onClick={() => handleDeleteClick(row.id)}
-                          size="small"
-                          disabled={isDeleting || !deleteById} // Disable if no delete function available
-                        >
-                          <TrashIcon size={18} />
-                        </IconButton>
-                      </Tooltip>
+                      <Stack spacing={0.5}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <CalendarIcon size={16} />
+                          <Typography variant="body2">
+                            {formatDateTime(row.startDateTime)}
+                          </Typography>
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary">
+                          Due: {formatDateTime(row.dueDateTime)}
+                        </Typography>
+                      </Stack>
+                    </TableCell>
+
+                    {/* Status Column */}
+                    <TableCell>
+                      <Chip
+                        label={statusInfo.status}
+                        color={statusInfo.color}
+                        size="small"
+                      />
+                    </TableCell>
+
+                    {/* Actions Column */}
+                    <TableCell>
+                      <Stack direction="row" spacing={1}>
+                        <Tooltip title="Edit Order">
+                          <IconButton
+                            component={RouterLink}
+                            href={`/orders/${row.id}`}
+                            color="primary"
+                            size="small"
+                          >
+                            <EditIcon size={18} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete Order">
+                          <IconButton
+                            color="error"
+                            onClick={() => handleDeleteClick(row.id)}
+                            size="small"
+                            disabled={isDeleting || !deleteOrder}
+                          >
+                            <TrashIcon size={18} />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
                     </TableCell>
                   </TableRow>
                 );
@@ -213,11 +336,12 @@ export function OrderTable({
         aria-describedby="delete-dialog-description"
       >
         <DialogTitle id="delete-dialog-title">
-          Confirm Delete
+          Confirm Delete Order
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this order? This action cannot be undone.
+            Are you sure you want to delete order for "{getOrderToDeleteName()}"? 
+            This action cannot be undone.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -233,7 +357,7 @@ export function OrderTable({
             variant="contained"
             disabled={isDeleting}
           >
-            {isDeleting ? 'Deleting...' : 'Delete'}
+            {isDeleting ? 'Deleting...' : 'Delete Order'}
           </Button>
         </DialogActions>
       </Dialog>
