@@ -96,20 +96,20 @@ export function CarrierForm({
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // Reset ID validation states when ID changes
-    if (field === 'id' && mode === 'create') {
-      setIsIdValid(true);
-      setHasIdBeenChecked(false);
+    // // Reset ID validation states when ID changes
+    // if (field === 'id' && mode === 'create') {
+    //   setIsIdValid(true);
+    //   setHasIdBeenChecked(false);
       
-      // Debounced ID check
-      if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-        const timeoutId = setTimeout(() => {
-          checkIdAvailability(value.trim());
-        }, 500);
+    //   // Debounced ID check
+    //   if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+    //     const timeoutId = setTimeout(() => {
+    //       checkIdAvailability(value.trim());
+    //     }, 500);
         
-        return () => clearTimeout(timeoutId);
-      }
-    }
+    //     return () => clearTimeout(timeoutId);
+    //   }
+    // }
   };
 
   const checkIdAvailability = async (id: string): Promise<boolean> => {
@@ -143,7 +143,7 @@ export function CarrierForm({
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
-
+    const isValid = await checkIdAvailability(formData.id.trim());
     // Required fields
     if (!formData.id.trim()) {
       newErrors.id = 'Carrier ID is required';
@@ -153,7 +153,7 @@ export function CarrierForm({
       setIsIdValid(false);
     } else if (mode === 'create') {
       if (!hasIdBeenChecked) {
-        const isValid = await checkIdAvailability(formData.id.trim());
+        
         if (!isValid) {
           newErrors.id = 'This carrier ID is already in use';
         }
@@ -193,12 +193,12 @@ export function CarrierForm({
 
   const handleSubmit = async () => {
     const isFormValid = await validateForm();
-    
+    const isValid = await checkIdAvailability(formData.id.trim());
     if (!isFormValid) {
       return;
     }
 
-    if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
+    if (mode === 'create' && (!isValid)) {
       setSubmitError('Please ensure the carrier ID is valid before submitting.');
       return;
     }

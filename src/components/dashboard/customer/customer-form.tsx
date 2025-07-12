@@ -104,21 +104,22 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
-
-    // Reset ID validation states when ID changes
-    if (field === 'id' && mode === 'create') {
-      setIsIdValid(true);
-      setHasIdBeenChecked(false);
+    //setIsIdValid(true);
+    
+    // // Reset ID validation states when ID changes
+    // if (field === 'id' && mode === 'create') {
+    //   setIsIdValid(true);
+    //   setHasIdBeenChecked(false);
       
-      // Debounced ID check (optional - check after user stops typing for 500ms)
-      if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-        const timeoutId = setTimeout(() => {
-          checkIdAvailability(value.trim());
-        }, 500);
+    //   // Debounced ID check (optional - check after user stops typing for 500ms)
+    //   if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+    //     const timeoutId = setTimeout(() => {
+    //       checkIdAvailability(value.trim());
+    //     }, 3000);
         
-        return () => clearTimeout(timeoutId);
-      }
-    }
+    //     return () => clearTimeout(timeoutId);
+    //   }
+    // }
   };
 
   const handleStationChange = (event: SelectChangeEvent<string>) => {
@@ -165,7 +166,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
-
+    const isValid = await checkIdAvailability(formData.id.trim());
     // Required fields
     if (!formData.id.trim()) {
       newErrors.id = 'Customer ID is required';
@@ -176,7 +177,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
     } else if (mode === 'create') {
       // Check ID availability for create mode
       if (!hasIdBeenChecked) {
-        const isValid = await checkIdAvailability(formData.id.trim());
+        
         if (!isValid) {
           newErrors.id = 'This customer ID is already in use';
         }
@@ -197,6 +198,11 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
 
     if (!formData.address.trim()) {
       newErrors.address = 'Address is required';
+    }
+
+    // Station validation - REQUIRED FIELD
+    if (!formData.stationId) {
+      newErrors.stationId = 'Associated station is required';
     }
 
     setErrors(newErrors);
@@ -269,24 +275,8 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
       </DialogTitle>
       
       <DialogContent dividers sx={{ p: 3 }}>
-        {submitError && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {submitError}
-          </Alert>
-        )}
-
-      {/* Show ID validation status for create mode */}
-        {mode === 'create' && formData.id.trim() && hasIdBeenChecked && (
-          <Alert 
-            severity={isIdValid ? "success" : "error"} 
-            sx={{ mb: 2 }}
-          >
-            {isIdValid 
-              ? "Customer ID is available!" 
-              : "Customer ID is already in use. Please choose a different ID."
-            }
-          </Alert>
-          )}
+      
+      
 
         <Grid container spacing={3}>
           {/* Basic Information */}
@@ -352,7 +342,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
           <Grid item xs={12}>
             <Divider sx={{ my: 1 }} />
             <Typography variant="h6" gutterBottom>
-              Station Associations
+              Located Station
             </Typography>
           </Grid>
 
@@ -361,6 +351,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
               <InputLabel>Associated Station</InputLabel>
               <Select
                 value={formData.stationId}
+                required
                 onChange={handleStationChange}
                 //label="Associated Station"
                 displayEmpty
@@ -396,6 +387,26 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
               </Alert>
             </Grid>
           )}
+            {submitError && (
+               <Grid item xs={12}>
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {submitError}
+              </Alert>
+          </Grid>
+        )}
+        {/* Show ID validation status for create mode */}
+        {mode === 'create' && formData.id.trim() && hasIdBeenChecked && (
+          <Alert 
+            severity={isIdValid ? "success" : "error"} 
+            sx={{ mb: 2 }}
+          >
+            {isIdValid 
+              ? "Customer ID is available!" 
+              : "Customer ID is already in use. Please choose a different ID."
+            }
+          </Alert>
+          )}
+
         </Grid>
       </DialogContent>
 

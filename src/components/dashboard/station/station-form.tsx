@@ -102,20 +102,20 @@ export function StationForm({
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // Reset ID validation states when ID changes
-    if (field === 'id' && mode === 'create') {
-      setIsIdValid(true);
-      setHasIdBeenChecked(false);
+    // // Reset ID validation states when ID changes
+    // if (field === 'id' && mode === 'create') {
+    //   setIsIdValid(true);
+    //   setHasIdBeenChecked(false);
       
-      // Debounced ID check
-      if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-        const timeoutId = setTimeout(() => {
-          checkIdAvailability(value.trim());
-        }, 500);
+    //   // Debounced ID check
+    //   if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+    //     const timeoutId = setTimeout(() => {
+    //       checkIdAvailability(value.trim());
+    //     }, 500);
         
-        return () => clearTimeout(timeoutId);
-      }
-    }
+    //     return () => clearTimeout(timeoutId);
+    //   }
+    // }
   };
 
   const handleSelectChange = (field: keyof StationFormData) => (
@@ -132,6 +132,7 @@ export function StationForm({
   const checkIdAvailability = async (id: string): Promise<boolean> => {
     if (mode === 'edit') {
       return true;
+
     }
 
     setIdCheckLoading(true);
@@ -160,7 +161,7 @@ export function StationForm({
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
-
+    const isValid = await checkIdAvailability(formData.id.trim());
     // Required fields
     if (!formData.id.trim()) {
       newErrors.id = 'Station ID is required';
@@ -170,7 +171,7 @@ export function StationForm({
       setIsIdValid(false);
     } else if (mode === 'create') {
       if (!hasIdBeenChecked) {
-        const isValid = await checkIdAvailability(formData.id.trim());
+        
         if (!isValid) {
           newErrors.id = 'This station ID is already in use';
         }
@@ -202,17 +203,17 @@ export function StationForm({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0 && (mode === 'edit' || isIdValid);
+    return Object.keys(newErrors).length === 0 && ((mode === 'edit' || isIdValid) || (mode === 'create' && !isValid));
   };
 
   const handleSubmit = async () => {
     const isFormValid = await validateForm();
-    
+    const isValid = await checkIdAvailability(formData.id.trim());
     if (!isFormValid) {
       return;
     }
 
-    if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
+    if (mode === 'create' && (!isValid)) {
       setSubmitError('Please ensure the station ID is valid before submitting.');
       return;
     }

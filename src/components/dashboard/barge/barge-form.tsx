@@ -111,19 +111,19 @@ export function BargeForm({
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // ID validation for create mode
-    if (field === 'id' && mode === 'create') {
-      setIsIdValid(true);
-      setHasIdBeenChecked(false);
+    // // ID validation for create mode
+    // if (field === 'id' && mode === 'create') {
+    //   setIsIdValid(true);
+    //   setHasIdBeenChecked(false);
       
-      if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-        const timeoutId = setTimeout(() => {
-          checkIdAvailability(value.trim());
-        }, 500);
+    //   if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+    //     const timeoutId = setTimeout(() => {
+    //       checkIdAvailability(value.trim());
+    //     }, 500);
         
-        return () => clearTimeout(timeoutId);
-      }
-    }
+    //     return () => clearTimeout(timeoutId);
+    //   }
+    // }
   };
 
   const handleSelectChange = (field: keyof BargeFormData) => (
@@ -176,7 +176,7 @@ export function BargeForm({
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
-
+    const isValid = await checkIdAvailability(formData.id.trim());
     // Required fields
     if (!formData.id.trim()) {
       newErrors.id = 'Barge ID is required';
@@ -186,7 +186,7 @@ export function BargeForm({
       setIsIdValid(false);
     } else if (mode === 'create') {
       if (!hasIdBeenChecked) {
-        const isValid = await checkIdAvailability(formData.id.trim());
+        
         if (!isValid) {
           newErrors.id = 'This barge ID is already in use';
         }
@@ -197,6 +197,10 @@ export function BargeForm({
 
     if (!formData.name.trim()) {
       newErrors.name = 'Barge name is required';
+    }
+
+    if (!formData.stationId.trim()) {
+      newErrors.stationId = 'Station is required';
     }
 
     // Validate numbers
@@ -222,12 +226,13 @@ export function BargeForm({
 
   const handleSubmit = async () => {
     const isFormValid = await validateForm();
-    
+    const isValid = await checkIdAvailability(formData.id.trim());
+
     if (!isFormValid) {
       return;
     }
 
-    if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
+    if (mode === 'create' && (!isValid)) {
       setSubmitError('Please ensure the barge ID is valid before submitting.');
       if (onError) onError('Please ensure the barge ID is valid before submitting.');
       return;
@@ -424,7 +429,7 @@ export function BargeForm({
         <Grid item xs={12}>
           <Divider sx={{ my: 1 }} />
           <Typography variant="h6" gutterBottom>
-            Station Assignment
+            Located Station
           </Typography>
         </Grid>
 
@@ -445,10 +450,11 @@ export function BargeForm({
          
               label="Assigned Station"
               displayEmpty
+              required
             >
-              <MenuItem value="">
+              {/* <MenuItem value="">
                 <em>No Station Selected</em>
-              </MenuItem>
+              </MenuItem> */}
               {stations.map((station) => (
                 <MenuItem key={station.id} value={station.id}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>

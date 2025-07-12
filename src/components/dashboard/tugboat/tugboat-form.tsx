@@ -38,6 +38,7 @@ import { useTugboat } from "@/hooks/use-tugboat";
 import { useStation } from "@/hooks/use-station";
 import { Tugboat, CreateTugboatRequest, UpdateTugboatRequest, TugboatFormData } from "@/types/tugboat";
 import { Station } from "@/types/station";
+import { el } from "date-fns/locale";
 
 interface TugboatFormProps {
   open: boolean;
@@ -129,19 +130,19 @@ export function TugboatForm({
       setErrors(prev => ({ ...prev, [field]: '' }));
     }
 
-    // ID validation for create mode
-    if (field === 'id' && mode === 'create') {
-      setIsIdValid(true);
-      setHasIdBeenChecked(false);
+    // // ID validation for create mode
+    // if (field === 'id' && mode === 'create') {
+    //   setIsIdValid(true);
+    //   setHasIdBeenChecked(false);
       
-      if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
-        const timeoutId = setTimeout(() => {
-          checkIdAvailability(value.trim());
-        }, 500);
+    //   if (value.trim() && /^[a-zA-Z0-9_-]+$/.test(value.trim())) {
+    //     const timeoutId = setTimeout(() => {
+    //       checkIdAvailability(value.trim());
+    //     }, 500);
         
-        return () => clearTimeout(timeoutId);
-      }
-    }
+    //     return () => clearTimeout(timeoutId);
+    //   }
+    // }
   };
 
   const handleSelectChange = (field: keyof TugboatFormData) => (
@@ -199,7 +200,7 @@ export function TugboatForm({
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
-
+    const isValid = await checkIdAvailability(formData.id.trim());
     // Required fields validation
     if (!formData.id.trim()) {
       newErrors.id = 'Tugboat ID is required';
@@ -209,7 +210,7 @@ export function TugboatForm({
       setIsIdValid(false);
     } else if (mode === 'create') {
       if (!hasIdBeenChecked) {
-        const isValid = await checkIdAvailability(formData.id.trim());
+        
         if (!isValid) {
           newErrors.id = 'This tugboat ID is already in use';
         }
@@ -224,6 +225,8 @@ export function TugboatForm({
       newErrors.name = 'Tugboat name must be at least 2 characters';
     } else if (formData.name.length > 100) {
       newErrors.name = 'Tugboat name must be less than 100 characters';
+    } else if (!formData.stationId){
+      newErrors.stationId = 'Station is required';
     }
 
     // Validate numbers
@@ -276,13 +279,14 @@ export function TugboatForm({
 
   const handleSubmit = async () => {
     const isFormValid = await validateForm();
+    const isValid = await checkIdAvailability(formData.id.trim());
     
     if (!isFormValid) {
       setSubmitError('Please fix the validation errors before submitting.');
       return;
     }
 
-    if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
+    if (mode === 'create' && (!isValid)) {
       setSubmitError('Please ensure the tugboat ID is valid before submitting.');
       if (onError) onError('Please ensure the tugboat ID is valid before submitting.');
       return;
@@ -636,7 +640,7 @@ export function TugboatForm({
           <Stack direction="row" alignItems="center" spacing={1}>
             <LocationIcon size={24} />
             <Typography variant="h6" gutterBottom>
-              Station Assignment
+              Located Station
             </Typography>
           </Stack>
         </Grid>
@@ -649,6 +653,7 @@ export function TugboatForm({
               onChange={handleSelectChange('stationId')}
               // label="Assigned Station"
               displayEmpty
+              required
             >
               {/* <MenuItem value="">
                 <em>No Station Selected</em>
