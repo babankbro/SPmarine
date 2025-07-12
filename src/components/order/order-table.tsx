@@ -178,7 +178,7 @@ export function OrderTable({
           <Table sx={{ minWidth: "800px" }}>
             <TableHead>
               <TableRow>
-                <TableCell padding="checkbox">
+                {/* <TableCell padding="checkbox">
                   <Checkbox
                     checked={selectedAll}
                     indeterminate={selectedSome}
@@ -186,7 +186,7 @@ export function OrderTable({
                       event.target.checked ? selectAll() : deselectAll();
                     }}
                   />
-                </TableCell>
+                </TableCell> */}
                 <TableCell>Order</TableCell>
                 <TableCell>Route & Stations</TableCell>
                 <TableCell>Demand & Rate</TableCell>
@@ -204,14 +204,14 @@ export function OrderTable({
 
                 return (
                   <TableRow hover key={row.id} selected={isSelected}>
-                    <TableCell padding="checkbox">
+                    {/* <TableCell padding="checkbox">
                       <Checkbox
                         checked={isSelected}
                         onChange={(event) => {
                           event.target.checked ? selectOne(row.id) : deselectOne(row.id);
                         }}
                       />
-                    </TableCell>
+                    </TableCell> */}
 
                     {/* Order Info Column */}
                     <TableCell>
@@ -227,7 +227,7 @@ export function OrderTable({
                           </Box>
                           <Stack direction="row" alignItems="center" spacing={1}>
                             <Typography variant="caption" color="text.secondary">
-                              ID: {row.id}
+                              Order ID: {row.id}
                             </Typography>
                             <Chip
                               label={row.type}
@@ -373,7 +373,7 @@ export function OrderTable({
           onRowsPerPageChange={onRowsPerPageChange}
           page={page}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10, 25, 50, 100, { label: 'All', value: -1 }]}
         />
       </Card>
 

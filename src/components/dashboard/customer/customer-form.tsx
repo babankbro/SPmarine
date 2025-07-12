@@ -24,7 +24,8 @@ import {
 } from "@mui/material";
 import { useCustomer } from "@/hooks/use-customer";
 import { useStation } from "@/hooks/use-station";
-import { Customer, CreateCustomerRequest, UpdateCustomerRequest } from "@/types/customer";
+import { Customer, CreateCustomerRequest, UpdateCustomerRequest, CustomerFormData } from "@/types/customer";
+import BasicSearchableStationSelect  from  "@/components/core/search/station-search-selected";
 import { Station } from "@/types/station";
 
 interface CustomerFormProps {
@@ -34,14 +35,6 @@ interface CustomerFormProps {
   mode: 'create' | 'edit';
 }
 
-interface CustomerFormData {
-  id: string;
-  name: string;
-  email: string;
-  address: string;
-  stationId: string; // Changed from stationIds array to single stationId
-  station?: Station; // Optional station object for edit mode
-}
 
 const initialFormData: CustomerFormData = {
   id: '',
@@ -122,17 +115,22 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
     // }
   };
 
-  const handleStationChange = (event: SelectChangeEvent<string>) => {
-    const value = event.target.value;
+  const handleStationChange = (event:React.SyntheticEvent<Element, Event>, station: Station ) => {
+    const value = (event.target as HTMLInputElement).value;
+    console.log(" Station changed:", value, station)
     setFormData(prev => ({ 
       ...prev, 
-      stationId: value, 
+      stationId: station?.id ||'', 
       station: stations.find(station => station.id === value) || undefined
     }));
     
     if (errors.stationId) {
       setErrors(prev => ({ ...prev, stationId: '' }));
     }
+  };
+  
+  const handleErrorClear = () => {
+    setErrors(prev => ({ ...prev, stationId: '' }));
   };
 
   const checkIdAvailability = async (id: string): Promise<boolean> => {
@@ -166,7 +164,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
 
   const validateForm = async (): Promise<boolean> => {
     const newErrors: Record<string, string> = {};
-    const isValid = await checkIdAvailability(formData.id.trim());
+  
     // Required fields
     if (!formData.id.trim()) {
       newErrors.id = 'Customer ID is required';
@@ -177,7 +175,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
     } else if (mode === 'create') {
       // Check ID availability for create mode
       if (!hasIdBeenChecked) {
-        
+        const isValid = await checkIdAvailability(formData.id.trim());
         if (!isValid) {
           newErrors.id = 'This customer ID is already in use';
         }
@@ -209,15 +207,19 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
     return Object.keys(newErrors).length === 0 && (mode === 'edit' || isIdValid);
   };
 
+
+  
+
   const handleSubmit = async () => {
     const isFormValid = await validateForm();
+    const isValid = await checkIdAvailability(formData.id.trim());
     
     if (!isFormValid) {
       return;
     }
 
     // Additional check to ensure ID is valid before submission
-    if (mode === 'create' && (!isIdValid || !hasIdBeenChecked)) {
+    if (mode === 'create' && (!isValid)) {
       setSubmitError('Please ensure the customer ID is valid before submitting.');
       return;
     }
@@ -245,7 +247,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
           stationId: formData.stationId,
           station: formData.station, // Include station object for edit mode
         };
-        //console.log('Customer data before update:', formData.station);
+        console.log('Customer data before update:', formData.station);
         //console.log('Updating customer:', customerData);
         await updateCustomer(customer.id, customerData);
       }
@@ -259,6 +261,9 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
 
   const isLoading = isCreating || isUpdating;
   const canSubmit = mode === 'edit' || (isIdValid && hasIdBeenChecked) || !formData.id.trim();
+
+
+
 
   return (
     <Dialog 
@@ -348,8 +353,8 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
 
           <Grid item xs={12}>
             <FormControl fullWidth error={!!errors.stationId}>
-              <InputLabel>Associated Station</InputLabel>
-              <Select
+              {/* <InputLabel>Associated Station</InputLabel> */}
+              {/* <Select
                 value={formData.stationId}
                 required
                 onChange={handleStationChange}
@@ -357,7 +362,7 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
                 displayEmpty
               >
                 <MenuItem value="">
-                  {/* <em>No Station Selected</em> */}
+                 <em>No Station Selected</em> 
                 </MenuItem>
                 {stations.map((station) => (
                   <MenuItem key={station.id} value={station.id}>
@@ -371,7 +376,15 @@ export function CustomerForm({ open, onClose, customer, mode }: CustomerFormProp
                     </Box>
                   </MenuItem>
                 ))}
-              </Select>
+              </Select> */}
+
+              <BasicSearchableStationSelect
+                value={formData.stationId}
+                onChange={handleStationChange}
+                error={errors.stationId}
+                onErrorClear={handleErrorClear}
+              />
+
               {errors.stationId && (
                 <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
                   {errors.stationId}

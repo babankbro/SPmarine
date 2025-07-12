@@ -39,6 +39,7 @@ import { useStation } from "@/hooks/use-station";
 import { Tugboat, CreateTugboatRequest, UpdateTugboatRequest, TugboatFormData } from "@/types/tugboat";
 import { Station } from "@/types/station";
 import { el } from "date-fns/locale";
+import BasicSearchableStationSelect from  "@/components/core/search/station-search-selected";
 
 interface TugboatFormProps {
   open: boolean;
@@ -341,6 +342,26 @@ export function TugboatForm({
       if (onError) onError(errorMessage);
     }
   };
+
+  
+  const handleStationChange = (event:React.SyntheticEvent<Element, Event>, station: Station ) => {
+      const value = (event.target as HTMLInputElement).value;
+      console.log(" Station changed:", value, station)
+      setFormData(prev => ({ 
+        ...prev, 
+        stationId: station?.id ||'', 
+        station: stations.find(station => station.id === value) || undefined
+      }));
+      
+      if (errors.stationId) {
+        setErrors(prev => ({ ...prev, stationId: '' }));
+      }
+    };
+    
+    const handleErrorClear = () => {
+      setErrors(prev => ({ ...prev, stationId: '' }));
+    };
+
 
   const isLoading = isCreating || isUpdating;
 
@@ -647,41 +668,13 @@ export function TugboatForm({
 
         <Grid item xs={12}>
           <FormControl fullWidth error={!!errors.stationId}>
-            <InputLabel>Assigned Station</InputLabel>
-            <Select
-              value={formData.stationId}
-              onChange={handleSelectChange('stationId')}
-              // label="Assigned Station"
-              displayEmpty
-              required
-            >
-              {/* <MenuItem value="">
-                <em>No Station Selected</em>
-              </MenuItem> */}
-              {stations.map((station) => (
-                <MenuItem key={station.id} value={station.id}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <LocationIcon size={16} />
-                      <Typography>{station.name}</Typography>
-                    </Stack>
-                    <Stack direction="row" spacing={1}>
-                      <Chip
-                        label={station.type}
-                        color={station.type === 'SEA' ? 'primary' : 'secondary'}
-                        size="small"
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {station.distanceKm}km
-                      </Typography>
-                    </Stack>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              {errors.stationId || 'Optional: Assign tugboat to a specific station'}
-            </FormHelperText>
+            
+              <BasicSearchableStationSelect
+                value={formData.stationId}
+                onChange={handleStationChange}
+                error={errors.stationId}
+                onErrorClear={handleErrorClear}
+              />
           </FormControl>
         </Grid>
 

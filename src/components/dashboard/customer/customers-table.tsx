@@ -171,7 +171,7 @@ export function CustomersTable({
                             </Link>
                           </Box>
                           <Typography variant="caption" color="text.secondary">
-                            ID: {row.id}
+                            Customer ID: {row.id}
                           </Typography>
                         </Box>
                       </Stack>
@@ -248,7 +248,7 @@ export function CustomersTable({
           onRowsPerPageChange={onRowsPerPageChange}
           page={page}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10, 25, 50, 100, { label: 'All', value: -1 }]}
         />
       </Card>
 

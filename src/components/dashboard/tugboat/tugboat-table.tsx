@@ -192,7 +192,7 @@ export function TugboatTable({
                             </Link>
                           </Box>
                           <Typography variant="caption" color="text.secondary">
-                            ID: {row.id}
+                            Tugboat ID: {row.id}
                           </Typography>
                         </Box>
                       </Stack>
@@ -315,7 +315,7 @@ export function TugboatTable({
           onRowsPerPageChange={onRowsPerPageChange}
           page={page}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10, 25, 50, 100, { label: 'All', value: -1 }]}
         />
       </Card>
 

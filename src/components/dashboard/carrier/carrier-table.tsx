@@ -170,7 +170,7 @@ export function CarrierTable({
                             </Link>
                           </Box>
                           <Typography variant="caption" color="text.secondary">
-                            ID: {row.id}
+                            Carrier ID: {row.id}
                           </Typography>
                         </Box>
                       </Stack>
@@ -260,7 +260,7 @@ export function CarrierTable({
           onRowsPerPageChange={onRowsPerPageChange}
           page={page}
           rowsPerPage={rowsPerPage}
-          rowsPerPageOptions={[5, 10, 25]}
+          rowsPerPageOptions={[5, 10, 25, 50, 100, { label: 'All', value: -1 }]}
         />
       </Card>
 

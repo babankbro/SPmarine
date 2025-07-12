@@ -28,6 +28,7 @@ import { useBarge } from "@/hooks/use-barge";
 import { useStation } from "@/hooks/use-station";
 import { Barge, CreateBargeRequest, UpdateBargeRequest, BargeFormData } from "@/types/barge";
 import { Station } from "@/types/station";
+import BasicSearchableStationSelect  from  "@/components/core/search/station-search-selected";
 
 interface BargeFormProps {
   open: boolean;
@@ -280,6 +281,24 @@ export function BargeForm({
     }
   };
 
+  const handleStationChange = (event:React.SyntheticEvent<Element, Event>, station: Station ) => {
+      const value = (event.target as HTMLInputElement).value;
+      console.log(" Station changed:", value, station)
+      setFormData(prev => ({ 
+        ...prev, 
+        stationId: station?.id ||'', 
+        station: stations.find(station => station.id === value) || undefined
+      }));
+      
+      if (errors.stationId) {
+        setErrors(prev => ({ ...prev, stationId: '' }));
+      }
+    };
+    
+    const handleErrorClear = () => {
+      setErrors(prev => ({ ...prev, stationId: '' }));
+    };
+
   const isLoading = isCreating || isUpdating;
 
   const formContent = (
@@ -435,44 +454,12 @@ export function BargeForm({
 
         <Grid item xs={12}>
           <FormControl fullWidth error={!!errors.stationId}>
-            <InputLabel>Assigned Station</InputLabel>
-            <Select
-              value={formData.stationId}
-              onChange={(event) => {
-                const station = stations.find((s) => s.id === formData.stationId);
-                setFormData((prevState) => ({
-                  ...prevState,
-                  stationId: event.target.value,
-                  waterStatus: station ? station.type : 'SEA', // Default to SEA if no station selected
-                }));
-                handleSelectChange('stationId')
-              }}
-         
-              label="Assigned Station"
-              displayEmpty
-              required
-            >
-              {/* <MenuItem value="">
-                <em>No Station Selected</em>
-              </MenuItem> */}
-              {stations.map((station) => (
-                <MenuItem key={station.id} value={station.id}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
-                    <Typography>{station.name}</Typography>
-                    <Chip
-                      label={station.type}
-                      color={station.type === 'SEA' ? 'primary' : 'secondary'}
-                      size="small"
-                    />
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-            {errors.stationId && (
-              <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                {errors.stationId}
-              </Typography>
-            )}
+            <BasicSearchableStationSelect
+                value={formData.stationId}
+                onChange={handleStationChange}
+                error={errors.stationId}
+                onErrorClear={handleErrorClear}
+              />
           </FormControl>
         </Grid>
 
