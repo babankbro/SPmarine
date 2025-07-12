@@ -15,7 +15,7 @@ export const navItems = [
 			{ key: "stations", title: "Stations", href: paths.dashboard.stations, icon: "garage" },
 		]
 	},
-	{ key: "orders", title: "Orders", href: paths.order, icon: "order" },
+	{ key: "orders", title: "Orders", href: paths.orders, icon: "order" },
 	{ 
 		key: "results", 
 		title: "Report Results", 

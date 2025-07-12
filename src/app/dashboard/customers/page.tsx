@@ -85,13 +85,22 @@ export default function CustomersPage() {
       let bValue: any = b[filters.sortBy as keyof Customer];
 
       // Handle special sorting cases
-      if (filters.sortBy === 'stationCount') {
-        aValue = a.station? 1 : 0;
-        bValue = b.station? 1 : 0;
+      if (filters.sortBy === 'stationName') {
+        aValue = a.station?.name?.toLowerCase() || '';
+        bValue = b.station?.name?.toLowerCase() || '';
       } else if (typeof aValue === 'string') {
         aValue = aValue.toLowerCase();
         bValue = bValue.toLowerCase();
       }
+      // Handle special sorting cases
+      else if (filters.sortBy === 'stationId') {
+        aValue = a.station?.id?.toLowerCase() || '';
+        bValue = b.station?.id?.toLowerCase() || '';
+      } else if (typeof aValue === 'string') {
+        aValue = aValue.toLowerCase();
+        bValue = bValue.toLowerCase();
+      }
+
 
       if (filters.sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
@@ -310,7 +319,8 @@ export default function CustomersPage() {
                 <MenuItem value="name">Customer Name</MenuItem>
                 <MenuItem value="email">Email</MenuItem>
                 <MenuItem value="address">Address</MenuItem>
-                <MenuItem value="stationCount">Station Count</MenuItem>
+                <MenuItem value="stationName">Station Name</MenuItem>
+                <MenuItem value="stationId">Station ID</MenuItem>
               </Select>
             </FormControl>
 

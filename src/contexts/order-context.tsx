@@ -23,19 +23,52 @@ const orderApi = {
   // Get order by ID
   getById: async (id: string): Promise<Order> => {
     const response = await axios.get(`${ORDERS_ENDPOINT}/${id}`);
-    return response.data;
+    // Handle the nested response structure from your backend
+    return response.data.data || response.data;
   },
 
   // Create new order
   create: async (order: CreateOrderRequest): Promise<Order> => {
+    console.log('Creating order with data:', order);
     const response = await axios.post(ORDERS_ENDPOINT, order);
     return response.data.data || response.data;
   },
 
-  // Update existing order
+  // Update existing order - Fixed to handle the backend response properly
   update: async (id: string, order: UpdateOrderRequest): Promise<Order> => {
-    const response = await axios.put(`${ORDERS_ENDPOINT}/${id}`, order);
-    return response.data.data || response.data;
+    console.log('Updating order via API:', id, order);
+    
+    // Ensure we're sending a proper object, not undefined
+    if (!order || Object.keys(order).length === 0) {
+      throw new Error('Order data is required for update');
+    }
+    
+    try {
+      const response = await axios.put(`${ORDERS_ENDPOINT}/${id}`, order, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log('API Response:', response.data);
+      
+      // Handle the nested response structure from your backend
+      // Your backend returns: { success: true, message: "...", status: 200, data: Order }
+      const updatedOrder = response.data.data || response.data;
+      
+      if (!updatedOrder) {
+        throw new Error('No order data returned from server');
+      }
+      
+      return updatedOrder;
+    } catch (error) {
+      console.error('API Update Error:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.response || error.message;
+        throw new Error(`Failed to update order: ${errorMessage}`);
+      }
+      throw error;
+    }
   },
 
   // Delete order
@@ -46,9 +79,12 @@ const orderApi = {
   // Check if order exists
   exists: async (id: string): Promise<boolean> => {
     try {
-      const response = await axios.get(`${ORDERS_ENDPOINT}/${id}/exists`);
-      return response.data.exists;
+      const response = await axios.get(`${ORDERS_ENDPOINT}/${id}`);
+      return !!response.data;
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return false;
+      }
       return false;
     }
   },
@@ -127,10 +163,14 @@ export function OrderProvider({ children }: OrderProviderProps) {
   const createMutation = useMutation({
     mutationFn: orderApi.create,
     onSuccess: (newOrder) => {
+      console.log('Order created successfully:', newOrder);
       // Update the cache with the new order
       queryClient.setQueryData(['orders'], (oldData: Order[] | undefined) => {
         return oldData ? [...oldData, newOrder] : [newOrder];
       });
+      
+      // Cache the individual order
+      queryClient.setQueryData(['orders', newOrder.id], newOrder);
       
       // Invalidate queries to ensure fresh data
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -140,28 +180,42 @@ export function OrderProvider({ children }: OrderProviderProps) {
     },
   });
 
-  // Update order mutation
+  // Update order mutation - Fixed to handle the API response properly
   const updateMutation = useMutation({
-    mutationFn: ({ id, order }: { id: string; order: UpdateOrderRequest }) =>
-      orderApi.update(id, order),
-    onSuccess: (updatedOrder) => {
-      // Update the cache with the updated order
+    mutationFn: ({ id, order }: { id: string; order: UpdateOrderRequest }) => {
+      console.log('Mutation function called with:', { id, order });
+      return orderApi.update(id, order);
+    },
+    onSuccess: (updatedOrder, variables) => {
+      console.log('Order updated successfully:', updatedOrder);
+      console.log('Update variables:', variables);
+      
+      // Ensure we have a valid updated order
+      if (!updatedOrder || !updatedOrder.id) {
+        console.error('Invalid updated order data:', updatedOrder);
+        return;
+      }
+      
+      // Update the orders list cache
       queryClient.setQueryData(['orders'], (oldData: Order[] | undefined) => {
-        return oldData
-          ? oldData.map((order) =>
-              order.id === updatedOrder.id ? updatedOrder : order
-            )
-          : [updatedOrder];
+        if (!oldData) return [updatedOrder];
+        
+        return oldData.map((order) =>
+          order.id === updatedOrder.id ? updatedOrder : order
+        );
       });
       
-      // Update individual order cache if it exists
+      // Update individual order cache
       queryClient.setQueryData(['orders', updatedOrder.id], updatedOrder);
       
-      // Invalidate queries to ensure fresh data
+      // Invalidate and refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['orders'] });
+      
+      console.log('Cache updated for order:', updatedOrder.id);
     },
-    onError: (error) => {
+    onError: (error, variables) => {
       console.error('Failed to update order:', error);
+      console.error('Update variables:', variables);
     },
   });
 
@@ -226,15 +280,30 @@ export function OrderProvider({ children }: OrderProviderProps) {
   // Create order function
   const createOrder = useCallback(
     async (order: CreateOrderRequest): Promise<Order> => {
+      console.log('Creating order in context:', order);
       return createMutation.mutateAsync(order);
     },
     [createMutation]
   );
 
-  // Update order function
+  // Update order function - Fixed to ensure proper data flow
   const updateOrder = useCallback(
     async (id: string, order: UpdateOrderRequest): Promise<Order> => {
-      return updateMutation.mutateAsync({ id, order });
+      console.log('Updating order in context:', id, order);
+      
+      // Validate input
+      if (!id || !order || Object.keys(order).length === 0) {
+        throw new Error('Order ID and update data are required');
+      }
+      
+      try {
+        const result = await updateMutation.mutateAsync({ id, order });
+        console.log('Update completed successfully:', result);
+        return result;
+      } catch (error) {
+        console.error('Update failed in context:', error);
+        throw error;
+      }
     },
     [updateMutation]
   );
@@ -249,6 +318,7 @@ export function OrderProvider({ children }: OrderProviderProps) {
 
   // Refresh data function
   const refreshData = useCallback(async () => {
+    console.log('Refreshing order data...');
     await refetch();
   }, [refetch]);
 

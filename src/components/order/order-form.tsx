@@ -22,7 +22,10 @@ import {
   Stack,
   InputAdornment,
   FormHelperText,
+  Autocomplete,
+  CircularProgress,
 } from "@mui/material";
+import { SelectChangeEvent } from "@mui/material/Select";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
@@ -31,11 +34,17 @@ import {
   MapPin as LocationIcon,
   Calendar as CalendarIcon,
   Truck as TruckIcon,
+  User as UserIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
 import { useOrderContext } from "@/contexts/order-context";
+import { useCarrier } from "@/hooks/use-carrier";
+import { useCustomer } from "@/hooks/use-customer";
+import { useStation } from "@/hooks/use-station";
 import { Order, CreateOrderRequest, UpdateOrderRequest, OrderFormData } from "@/types/order";
 import { Station } from "@/types/station";
+import { Carrier } from "@/types/carrier";
+import { Customer } from "@/types/customer";
 
 interface OrderFormProps {
   open: boolean;
@@ -45,6 +54,25 @@ interface OrderFormProps {
   onSuccess?: () => void;
   onError?: (error: string) => void;
   embedded?: boolean;
+}
+
+// TypeScript interfaces for components
+interface OrderTypeSelectProps {
+  formData: OrderFormData;
+  errors: Record<string, string>;
+  onTypeChange: (event: SelectChangeEvent<'IMPORT' | 'EXPORT'>, child: React.ReactNode) => void;
+}
+
+interface RouteInformationSectionProps {
+  formData: OrderFormData;
+  setFormData: React.Dispatch<React.SetStateAction<OrderFormData>>;
+  errors: Record<string, string>;
+  setErrors: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  stations: Station[];
+  carriers: Carrier[];
+  customers: Customer[];
+  isLoadingCarriers: boolean;
+  isCustomersLoading: boolean;
 }
 
 const initialFormData: OrderFormData = {
@@ -75,6 +103,742 @@ const initialFormData: OrderFormData = {
   timeReadyCR7: '0',
 };
 
+// OrderTypeSelect Component
+const OrderTypeSelect: React.FC<OrderTypeSelectProps> = ({ 
+  formData, 
+  errors, 
+  onTypeChange 
+}) => {
+  return (
+    <Grid item xs={12} sm={6}>
+      <FormControl fullWidth error={!!errors.type}>
+        <InputLabel>Order Type</InputLabel>
+        <Select
+          value={formData.type}
+          onChange={onTypeChange}
+          label="Order Type"
+        >
+          <MenuItem value="IMPORT">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <PackageIcon size={20} />
+              <Box>
+                <Typography variant="body2">Import</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Carrier → Customer
+                </Typography>
+              </Box>
+            </Stack>
+          </MenuItem>
+          <MenuItem value="EXPORT">
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <PackageIcon size={20} />
+              <Box>
+                <Typography variant="body2">Export</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Customer → Carrier
+                </Typography>
+              </Box>
+            </Stack>
+          </MenuItem>
+        </Select>
+        <FormHelperText>
+          {errors.type || 'Type of shipment operation'}
+        </FormHelperText>
+      </FormControl>
+    </Grid>
+  );
+};
+
+const RouteInformationSection: React.FC<RouteInformationSectionProps> = ({ 
+  formData, 
+  setFormData, 
+  errors, 
+  setErrors, 
+  stations,
+  carriers,
+  customers,
+  isLoadingCarriers,
+  isCustomersLoading
+}) => {
+  // Helper function to clear errors
+  const clearFieldError = (field: string): void => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  // Get filtered stations based on carrier selection for IMPORT orders
+  const getFilteredStations = (field: 'start' | 'dest'): Station[] => {
+    // For IMPORT orders, filter start stations based on carrier's water type
+    if (formData.type === 'IMPORT' && field === 'start' && formData.fromEntityId) {
+      const selectedCarrier = carriers.find(c => c.id === formData.fromEntityId);
+      
+      if (selectedCarrier) {
+        // If carrier has a specific water type, filter stations accordingly
+        // Assuming carriers have a 'waterType' or similar property
+        // For now, we'll check if carrier name/type indicates water type
+        
+        // Option 1: If carrier has a waterType property
+        // return stations.filter(station => station.type === selectedCarrier.waterType);
+        
+        // Option 2: If we need to determine from carrier properties
+        // For carriers coming from sea, show only SEA stations for start
+        // This is a common pattern where sea carriers can only dock at sea ports
+        return stations.filter(station => station.type === 'SEA');
+      }
+    }
+    
+    // For EXPORT orders or when no carrier is selected, show all stations
+    return stations;
+  };
+
+  // Auto-select station when customer is selected (for destination in IMPORT orders)
+  useEffect(() => {
+    if (formData.type === 'IMPORT' && formData.destEntityId) {
+      const selectedCustomer = customers.find(c => c.id === formData.destEntityId);
+      if (selectedCustomer?.stationId && selectedCustomer.stationId !== formData.destStationId) {
+        setFormData(prev => ({ 
+          ...prev, 
+          destStationId: selectedCustomer?.stationId || ''
+        }));
+        clearFieldError('destStationId');
+      }
+    }
+  }, [formData.type, formData.destEntityId, customers]);
+
+  // Auto-select station when customer is selected (for origin in EXPORT orders)
+  useEffect(() => {
+    if (formData.type === 'EXPORT' && formData.fromEntityId) {
+      const selectedCustomer = customers.find(c => c.id === formData.fromEntityId);
+      if (selectedCustomer?.stationId && selectedCustomer.stationId !== formData.startStationId) {
+        setFormData(prev => ({ 
+          ...prev, 
+          startStationId: selectedCustomer?.stationId || ''
+        }));
+        clearFieldError('startStationId');
+      }
+    }
+  }, [formData.type, formData.fromEntityId, customers]);
+
+  // Clear start station when carrier changes (for IMPORT orders)
+  useEffect(() => {
+    if (formData.type === 'IMPORT' && formData.fromEntityId) {
+      const availableStations = getFilteredStations('start');
+      const currentStartStation = availableStations.find(s => s.id === formData.startStationId);
+      
+      // If current start station is not in the filtered list, clear it
+      if (formData.startStationId && !currentStartStation) {
+        setFormData(prev => ({ 
+          ...prev, 
+          startStationId: '' 
+        }));
+      }
+    }
+  }, [formData.type, formData.fromEntityId, carriers]);
+
+
+  // Handle entity selection with automatic station selection
+  // Handle entity selection with enhanced logic
+  const handleFromEntityChange = (
+    event: React.SyntheticEvent<Element, Event>, 
+    newValue: Carrier | Customer | null
+  ): void => {
+    const entityId = newValue?.id || '';
+    
+    // Clear start station when carrier changes for IMPORT orders
+    if (formData.type === 'IMPORT') {
+      setFormData(prev => ({ 
+        ...prev, 
+        fromEntityId: entityId,
+        startStationId: '' // Clear start station to force reselection with new filter
+      }));
+      clearFieldError('startStationId');
+    } else {
+      setFormData(prev => ({ ...prev, fromEntityId: entityId }));
+    }
+    
+    clearFieldError('fromEntityId');
+
+    // Auto-select station if customer is selected and it's an EXPORT order
+    if (formData.type === 'EXPORT' && newValue && 'email' in newValue && newValue.stationId) {
+      setFormData(prev => ({ 
+        ...prev, 
+        fromEntityId: entityId,
+        startStationId: newValue.stationId || ''
+      }));
+      clearFieldError('startStationId');
+    }
+  };
+
+  const handleDestEntityChange = (
+    event: React.SyntheticEvent<Element, Event>, 
+    newValue: Carrier | Customer | null
+  ): void => {
+    const entityId = newValue?.id || '';
+    setFormData(prev => ({ ...prev, destEntityId: entityId }));
+    clearFieldError('destEntityId');
+
+    // Auto-select station if customer is selected and it's an IMPORT order
+    if (formData.type === 'IMPORT' && newValue && 'email' in newValue && newValue.stationId) {
+      setFormData(prev => ({ 
+        ...prev, 
+        destEntityId: entityId,
+        destStationId: newValue.stationId || ''
+      }));
+      clearFieldError('destStationId');
+    }
+  };
+
+ 
+
+  // Handle manual station selection
+  const handleStationChange = (field: 'startStationId' | 'destStationId') => (
+    event: SelectChangeEvent<string>
+  ): void => {
+    const value = event.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
+    clearFieldError(field);
+  };
+
+  // Get current selections with proper typing
+  const selectedFromEntity: Carrier | Customer | undefined = formData.type === 'IMPORT' 
+    ? carriers.find((c: Carrier) => c.id === formData.fromEntityId)
+    : customers.find((c: Customer) => c.id === formData.fromEntityId);
+
+  const selectedDestEntity: Carrier | Customer | undefined = formData.type === 'IMPORT'
+    ? customers.find((c: Customer) => c.id === formData.destEntityId)
+    : carriers.find((c: Carrier) => c.id === formData.destEntityId);
+
+  // Get station info for display
+  const getStationDisplayInfo = (stationId: string, isAutoSelected: boolean = false) => {
+    const station = stations.find(s => s.id === stationId);
+    if (!station) return null;
+
+    return {
+      station,
+      isAutoSelected,
+      displayText: isAutoSelected ? `${station.name} (Auto-selected from customer)` : station.name
+    };
+  };
+
+  // Get filtered stations for each field
+  const availableStartStations = getFilteredStations('start');
+  const availableDestStations = getFilteredStations('dest');
+
+  // Check if stations are auto-selected
+  const isStartStationAutoSelected = formData.type === 'EXPORT' && 
+    selectedFromEntity && 'email' in selectedFromEntity && 
+    selectedFromEntity.stationId === formData.startStationId;
+
+  const isDestStationAutoSelected = formData.type === 'IMPORT' && 
+    selectedDestEntity && 'email' in selectedDestEntity && 
+    selectedDestEntity.stationId === formData.destStationId;
+
+    // Check if start station is filtered due to carrier selection
+  const isStartStationFiltered = formData.type === 'IMPORT' && 
+    formData.fromEntityId && 
+    availableStartStations.length < stations.length;
+
+  // Get labels based on order type
+  const getEntityLabels = (): {
+    fromLabel: string;
+    fromHelperText: string;
+    destLabel: string;
+    destHelperText: string;
+  } => {
+    if (formData.type === 'IMPORT') {
+      return {
+        fromLabel: 'From Carrier',
+        fromHelperText: 'Select the carrier/ship providing the goods',
+        destLabel: 'To Customer',
+        destHelperText: 'Select the customer receiving the goods'
+      };
+    } else {
+      return {
+        fromLabel: 'From Customer',
+        fromHelperText: 'Select the customer sending the goods',
+        destLabel: 'To Carrier',
+        destHelperText: 'Select the carrier/ship taking the goods'
+      };
+    }
+  };
+
+  const labels = getEntityLabels();
+
+  return (
+    <>
+      {/* Section Header */}
+      <Grid item xs={12}>
+        <Divider sx={{ my: 2 }} />
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <LocationIcon size={24} />
+          <Typography variant="h6" gutterBottom>
+            Route Information
+          </Typography>
+          <Chip
+            label={formData.type}
+            color={formData.type === 'IMPORT' ? 'primary' : 'secondary'}
+            size="small"
+          />
+          {isStartStationFiltered && (
+            <Chip
+              label="Sea Stations Only"
+              color="info"
+              size="small"
+              variant="outlined"
+            />
+          )}
+        </Stack>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+          {formData.type === 'IMPORT' 
+            ? 'Import: Carrier → Customer (goods coming into port)'
+            : 'Export: Customer → Carrier (goods leaving port)'
+          }
+          {isStartStationFiltered && (
+            <Typography component="span" variant="body2" color="info.main" sx={{ ml: 1 }}>
+              • Start stations filtered for sea carrier
+            </Typography>
+          )}
+        </Typography>
+      </Grid>
+
+      {/* From Entity Autocomplete - Keep existing implementation but add carrier water type info */}
+      <Grid item xs={12} sm={6}>
+        <Autocomplete
+          fullWidth
+          options={formData.type === 'IMPORT' ? carriers : customers}
+          getOptionLabel={(option: Carrier | Customer) => `${option.name} (${option.id})`}
+          value={selectedFromEntity || null}
+          onChange={handleFromEntityChange}
+          loading={formData.type === 'IMPORT' ? isLoadingCarriers : isCustomersLoading}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={labels.fromLabel}
+              error={!!errors.fromEntityId}
+              helperText={
+                errors.fromEntityId || 
+                labels.fromHelperText +
+                (formData.type === 'IMPORT' ? ' (Sea carriers will filter available start stations)' : '')
+              }
+              required
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <>
+                    {formData.type === 'IMPORT' ? (
+                      <TruckIcon size={20} style={{ marginRight: 8 }} />
+                    ) : (
+                      <UserIcon size={20} style={{ marginRight: 8 }} />
+                    )}
+                    {params.InputProps.startAdornment}
+                  </>
+                ),
+                endAdornment: (
+                  <>
+                    {(formData.type === 'IMPORT' ? isLoadingCarriers : isCustomersLoading) ? (
+                      <CircularProgress color="inherit" size={20} />
+                    ) : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          renderOption={(props, option: Carrier | Customer) => {
+            const isCarrier = (opt: Carrier | Customer): opt is Carrier => {
+              return 'maxCapacity' in opt;
+            };
+
+            const isCustomer = !isCarrier(option);
+            const customerStation = isCustomer && option.stationId 
+              ? stations.find(s => s.id === option.stationId)
+              : null;
+
+            return (
+              <Box component="li" {...props}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                  {formData.type === 'IMPORT' ? (
+                    <TruckIcon size={16} />
+                  ) : (
+                    <UserIcon size={16} />
+                  )}
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="body2" fontWeight="medium">
+                      {option.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {option.id}
+                      {formData.type === 'IMPORT' && isCarrier(option) && option.holder && ` • ${option.holder}`}
+                      {formData.type === 'EXPORT' && isCustomer && option.email && ` • ${option.email}`}
+                      {isCustomer && customerStation && ` • Station: ${customerStation.name}`}
+                    </Typography>
+                  </Box>
+                  {formData.type === 'IMPORT' && isCarrier(option) && (
+                    <Stack direction="row" spacing={1}>
+                      {option.maxCapacity && (
+                        <Chip
+                          label={`${option.maxCapacity.toLocaleString()}t`}
+                          size="small"
+                          variant="outlined"
+                        />
+                      )}
+                      <Chip
+                        label="Sea"
+                        color="primary"
+                        size="small"
+                        variant="outlined"
+                      />
+                    </Stack>
+                  )}
+                  {isCustomer && customerStation && (
+                    <Chip
+                      label={customerStation.type}
+                      color={customerStation.type === 'SEA' ? 'primary' : 'secondary'}
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                </Stack>
+              </Box>
+            );
+          }}
+          noOptionsText={
+            formData.type === 'IMPORT' ? 'No carriers found' : 'No customers found'
+          }
+        />
+      </Grid>
+
+      {/* To Entity Autocomplete - Keep existing implementation */}
+      <Grid item xs={12} sm={6}>
+        <Autocomplete
+          fullWidth
+          options={formData.type === 'IMPORT' ? customers : carriers}
+          getOptionLabel={(option: Carrier | Customer) => `${option.name} (${option.id})`}
+          value={selectedDestEntity || null}
+          onChange={handleDestEntityChange}
+          loading={formData.type === 'IMPORT' ? isCustomersLoading : isLoadingCarriers}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label={labels.destLabel}
+              error={!!errors.destEntityId}
+              helperText={errors.destEntityId || labels.destHelperText}
+              required
+              InputProps={{
+                ...params.InputProps,
+                startAdornment: (
+                  <>
+                    {formData.type === 'IMPORT' ? (
+                      <UserIcon size={20} style={{ marginRight: 8 }} />
+                    ) : (
+                      <TruckIcon size={20} style={{ marginRight: 8 }} />
+                    )}
+                    {params.InputProps.startAdornment}
+                  </>
+                ),
+                endAdornment: (
+                  <>
+                    {(formData.type === 'IMPORT' ? isCustomersLoading : isLoadingCarriers) ? (
+                      <CircularProgress color="inherit" size={20} />
+                    ) : null}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
+            />
+          )}
+          renderOption={(props, option: Carrier | Customer) => {
+            const isCarrier = (opt: Carrier | Customer): opt is Carrier => {
+              return 'maxCapacity' in opt;
+            };
+
+            const isCustomer = !isCarrier(option);
+            const customerStation = isCustomer && option.stationId 
+              ? stations.find(s => s.id === option.stationId)
+              : null;
+
+            return (
+              <Box component="li" {...props}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ width: '100%' }}>
+                  {formData.type === 'IMPORT' ? (
+                    <UserIcon size={16} />
+                  ) : (
+                    <TruckIcon size={16} />
+                  )}
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="body2" fontWeight="medium">
+                      {option.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {option.id}
+                      {formData.type === 'IMPORT' && isCustomer && option.email && ` • ${option.email}`}
+                      {formData.type === 'EXPORT' && isCarrier(option) && option.holder && ` • ${option.holder}`}
+                      {isCustomer && customerStation && ` • Station: ${customerStation.name}`}
+                    </Typography>
+                  </Box>
+                  {formData.type === 'EXPORT' && isCarrier(option) && option.maxCapacity && (
+                    <Chip
+                      label={`${option.maxCapacity.toLocaleString()}t`}
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                  {isCustomer && customerStation && (
+                    <Chip
+                      label={customerStation.type}
+                      color={customerStation.type === 'SEA' ? 'primary' : 'secondary'}
+                      size="small"
+                      variant="outlined"
+                    />
+                  )}
+                </Stack>
+              </Box>
+            );
+          }}
+          noOptionsText={
+            formData.type === 'IMPORT' ? 'No customers found' : 'No carriers found'
+          }
+        />
+      </Grid>
+
+      {/* Enhanced Start Station Selection with Filtering */}
+      <Grid item xs={12} sm={6}>
+        <FormControl fullWidth error={!!errors.startStationId}>
+          <InputLabel>Start Station</InputLabel>
+          <Select
+            value={formData.startStationId}
+            onChange={handleStationChange('startStationId')}
+            label="Start Station"
+            required
+          >
+            {availableStartStations.map((station: Station) => (
+              <MenuItem 
+                key={station.id} 
+                value={station.id}
+                sx={{
+                  backgroundColor: station.id === formData.startStationId && isStartStationAutoSelected 
+                    ? 'action.selected' 
+                    : 'inherit'
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <LocationIcon size={16} />
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Typography variant="body2" fontWeight="medium">
+                          {station.name}
+                        </Typography>
+                        {station.id === formData.startStationId && isStartStationAutoSelected && (
+                          <Chip
+                            label="Auto"
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                            sx={{ height: 16, fontSize: '0.625rem' }}
+                          />
+                        )}
+                        {isStartStationFiltered && (
+                          <Chip
+                            label="Filtered"
+                            color="info"
+                            size="small"
+                            variant="outlined"
+                            sx={{ height: 16, fontSize: '0.625rem' }}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        {station.id} • {station.distanceKm}km from origin
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Chip
+                    label={station.type}
+                    color={station.type === 'SEA' ? 'primary' : 'secondary'}
+                    size="small"
+                  />
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+            {errors.startStationId || 
+             (isStartStationAutoSelected 
+               ? 'Station auto-selected from customer' 
+               : isStartStationFiltered
+               ? `Showing ${availableStartStations.length} sea stations for carrier`
+               : 'Station where the journey begins'
+             )
+            }
+          </Typography>
+        </FormControl>
+      </Grid>
+
+      {/* Destination Station Selection - Keep existing implementation */}
+      <Grid item xs={12} sm={6}>
+        <FormControl fullWidth error={!!errors.destStationId}>
+          <InputLabel>Destination Station</InputLabel>
+          <Select
+            value={formData.destStationId}
+            onChange={handleStationChange('destStationId')}
+            label="Destination Station"
+            required
+          >
+            {availableDestStations.map((station: Station) => (
+              <MenuItem 
+                key={station.id} 
+                value={station.id}
+                sx={{
+                  backgroundColor: station.id === formData.destStationId && isDestStationAutoSelected 
+                    ? 'action.selected' 
+                    : 'inherit'
+                }}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <LocationIcon size={16} />
+                    <Box>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Typography variant="body2" fontWeight="medium">
+                          {station.name}
+                        </Typography>
+                        {station.id === formData.destStationId && isDestStationAutoSelected && (
+                          <Chip
+                            label="Auto"
+                            color="success"
+                            size="small"
+                            variant="outlined"
+                            sx={{ height: 16, fontSize: '0.625rem' }}
+                          />
+                        )}
+                      </Stack>
+                      <Typography variant="caption" color="text.secondary">
+                        {station.id} • {station.distanceKm}km from origin
+                      </Typography>
+                    </Box>
+                  </Stack>
+                  <Chip
+                    label={station.type}
+                    color={station.type === 'SEA' ? 'primary' : 'secondary'}
+                    size="small"
+                  />
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+            {errors.destStationId || 
+             (isDestStationAutoSelected 
+               ? 'Station auto-selected from customer' 
+               : 'Final destination station'
+             )
+            }
+          </Typography>
+        </FormControl>
+      </Grid>
+
+      {/* Enhanced Route Summary with Filtering Info */}
+      <Grid item xs={12}>
+        <Box sx={{ 
+          p: 2, 
+          bgcolor: 'background.level1', 
+          borderRadius: 1,
+          border: '1px solid',
+          borderColor: 'divider'
+        }}>
+          <Typography variant="subtitle2" gutterBottom>
+            Route Summary
+          </Typography>
+          <Stack spacing={1}>
+            {/* Entity Route */}
+            <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
+              <Stack direction="row" alignItems="center" spacing={1}>
+                {formData.type === 'IMPORT' ? <TruckIcon size={16} /> : <UserIcon size={16} />}
+                <Typography variant="body2" color="text.secondary">
+                  From: {selectedFromEntity?.name || 'Not selected'}
+                  {formData.type === 'IMPORT' && selectedFromEntity && (
+                    <Chip
+                      label="Sea Carrier"
+                      color="primary"
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: 1, height: 16, fontSize: '0.625rem' }}
+                    />
+                  )}
+                </Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary">→</Typography>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                {formData.type === 'IMPORT' ? <UserIcon size={16} /> : <TruckIcon size={16} />}
+                <Typography variant="body2" color="text.secondary">
+                  To: {selectedDestEntity?.name || 'Not selected'}
+                </Typography>
+              </Stack>
+            </Stack>
+            
+            {/* Station Route */}
+            <Stack direction="row" alignItems="center" spacing={2} flexWrap="wrap">
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <LocationIcon size={16} />
+                <Typography variant="body2" color="text.secondary">
+                  Via: {availableStartStations.find((s: Station) => s.id === formData.startStationId)?.name || 'Start'}
+                  {isStartStationAutoSelected && (
+                    <Chip
+                      label="Auto"
+                      color="success"
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: 1, height: 16, fontSize: '0.625rem' }}
+                    />
+                  )}
+                  {isStartStationFiltered && (
+                    <Chip
+                      label="Sea Only"
+                      color="info"
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: 1, height: 16, fontSize: '0.625rem' }}
+                    />
+                  )}
+                </Typography>
+              </Stack>
+              <Typography variant="body2" color="text.secondary">→</Typography>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <LocationIcon size={16} />
+                <Typography variant="body2" color="text.secondary">
+                  {availableDestStations.find((s: Station) => s.id === formData.destStationId)?.name || 'End'}
+                  {isDestStationAutoSelected && (
+                    <Chip
+                      label="Auto"
+                      color="success"
+                      size="small"
+                      variant="outlined"
+                      sx={{ ml: 1, height: 16, fontSize: '0.625rem' }}
+                    />
+                  )}
+                </Typography>
+              </Stack>
+            </Stack>
+
+            {/* Filtering Information */}
+            {isStartStationFiltered && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                <Typography variant="caption">
+                  Showing {availableStartStations.length} sea stations available for the selected carrier. 
+                  Sea carriers can only dock at sea ports.
+                </Typography>
+              </Alert>
+            )}
+          </Stack>
+        </Box>
+      </Grid>
+    </>
+  );
+};
+
+// Main OrderForm Component
 export function OrderForm({ 
   open, 
   onClose, 
@@ -85,13 +849,17 @@ export function OrderForm({
   embedded = false 
 }: OrderFormProps) {
   const { createOrder, updateOrder, refreshData, isCreating, isUpdating, checkOrderExists } = useOrderContext();
+  const { data: carriers = [], isLoading: isLoadingCarriers } = useCarrier();
+  const { data: customers = [], isLoading: isCustomersLoading } = useCustomer();
+  const { data: stations = [], isLoading: isStationsLoading } = useStation();
+  
   const [formData, setFormData] = useState<OrderFormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string>('');
   const [idCheckLoading, setIdCheckLoading] = useState(false);
   const [isIdValid, setIsIdValid] = useState<boolean>(true);
   const [hasIdBeenChecked, setHasIdBeenChecked] = useState<boolean>(false);
-  const [stations, setStations] = useState<Station[]>([]);
+
 
   // Reset form when dialog opens/closes or mode changes
   useEffect(() => {
@@ -136,6 +904,28 @@ export function OrderForm({
     setErrors({});
     setSubmitError('');
   }, [mode, order, open]);
+
+  // Enhanced order type change handler
+  const handleOrderTypeChange = (event: SelectChangeEvent<'IMPORT' | 'EXPORT'>, child: React.ReactNode): void => {
+    const newType = event.target.value as 'IMPORT' | 'EXPORT';
+    setFormData(prev => ({ 
+      ...prev, 
+      type: newType,
+      // Clear entity selections when type changes
+      fromEntityId: '',
+      destEntityId: ''
+    }));
+    
+    // Clear related errors
+    if (errors.type || errors.fromEntityId || errors.destEntityId) {
+      setErrors(prev => ({ 
+        ...prev, 
+        type: '', 
+        fromEntityId: '', 
+        destEntityId: '' 
+      }));
+    }
+  };
 
   const handleInputChange = (field: keyof OrderFormData) => (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -303,8 +1093,8 @@ export function OrderForm({
         const orderData: CreateOrderRequest = {
           id: formData.id.trim(),
           type: formData.type,
-          fromEntityId: formData.fromEntityId?.trim()|| '',
-          destEntityId: formData.destEntityId?.trim()|| '',
+          fromEntityId: formData.fromEntityId?.trim() || '',
+          destEntityId: formData.destEntityId?.trim() || '',
           startStationId: formData.startStationId,
           destStationId: formData.destStationId,
           productName: formData.productName.trim(),
@@ -332,8 +1122,8 @@ export function OrderForm({
       } else if (order) {
         const orderData: UpdateOrderRequest = {
           type: formData.type,
-          fromEntityId: formData.fromEntityId?.trim()|| '',
-          destEntityId: formData.destEntityId?.trim()|| '',
+          fromEntityId: formData.fromEntityId?.trim() || '',
+          destEntityId: formData.destEntityId?.trim() || '',
           startStationId: formData.startStationId,
           destStationId: formData.destStationId,
           productName: formData.productName.trim(),
@@ -356,7 +1146,7 @@ export function OrderForm({
           timeReadyCR6: Number(formData.timeReadyCR6),
           timeReadyCR7: Number(formData.timeReadyCR7),
         };
-
+        console.log("Updating order with data:", orderData)
         await updateOrder(order.id, orderData);
       }
 
@@ -424,32 +1214,12 @@ export function OrderForm({
           />
         </Grid>
 
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth error={!!errors.type}>
-            <InputLabel>Order Type</InputLabel>
-            <Select
-              value={formData.type}
-              onChange={handleSelectChange('type')}
-              label="Order Type"
-            >
-              <MenuItem value="IMPORT">
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <PackageIcon size={20} />
-                  <span>Import</span>
-                </Stack>
-              </MenuItem>
-              <MenuItem value="EXPORT">
-                <Stack direction="row" alignItems="center" spacing={1}>
-                  <PackageIcon size={20} />
-                  <span>Export</span>
-                </Stack>
-              </MenuItem>
-            </Select>
-            <FormHelperText>
-              {errors.type || 'Type of shipment operation'}
-            </FormHelperText>
-          </FormControl>
-        </Grid>
+        {/* Order Type Select Component */}
+        <OrderTypeSelect 
+          formData={formData}
+          errors={errors}
+          onTypeChange={handleOrderTypeChange}
+        />
 
         <Grid item xs={12}>
           <TextField
@@ -463,100 +1233,18 @@ export function OrderForm({
           />
         </Grid>
 
-        {/* Location Information Section */}
-        <Grid item xs={12}>
-          <Divider sx={{ my: 2 }} />
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <LocationIcon size={24} />
-            <Typography variant="h6" gutterBottom>
-              Route Information
-            </Typography>
-          </Stack>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="From Point"
-            value={formData.fromEntityId|| ''}
-            onChange={handleInputChange('fromEntityId')}
-            error={!!errors.fromPoint}
-            helperText={errors.fromPoint || 'Origin location'}
-            required
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Destination Point"
-            value={formData.fromEntityId|| ''}
-            onChange={handleInputChange('destEntityId')}
-            error={!!errors.destPoint}
-            helperText={errors.destPoint || 'Final destination'}
-            required
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth error={!!errors.startStationId}>
-            <InputLabel>Start Station</InputLabel>
-            <Select
-              value={formData.startStationId}
-              onChange={handleSelectChange('startStationId')}
-              label="Start Station"
-            >
-              {stations.map((station) => (
-                <MenuItem key={station.id} value={station.id}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <LocationIcon size={16} />
-                      <Typography>{station.name}</Typography>
-                    </Stack>
-                    <Chip
-                      label={station.type}
-                      color={station.type === 'SEA' ? 'primary' : 'secondary'}
-                      size="small"
-                    />
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              {errors.startStationId || 'Station where the journey begins'}
-            </FormHelperText>
-          </FormControl>
-        </Grid>
-
-        <Grid item xs={12} sm={6}>
-          <FormControl fullWidth error={!!errors.destStationId}>
-            <InputLabel>Destination Station</InputLabel>
-            <Select
-              value={formData.destStationId}
-              onChange={handleSelectChange('destStationId')}
-              label="Destination Station"
-            >
-              {stations.map((station) => (
-                <MenuItem key={station.id} value={station.id}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <LocationIcon size={16} />
-                      <Typography>{station.name}</Typography>
-                    </Stack>
-                    <Chip
-                      label={station.type}
-                      color={station.type === 'SEA' ? 'primary' : 'secondary'}
-                      size="small"
-                    />
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-            <FormHelperText>
-              {errors.destStationId || 'Final destination station'}
-            </FormHelperText>
-          </FormControl>
-        </Grid>
+        {/* Route Information Section Component */}
+        <RouteInformationSection
+          formData={formData}
+          setFormData={setFormData}
+          errors={errors}
+          setErrors={setErrors}
+          stations={stations}
+          carriers={carriers}
+          customers={customers}
+          isLoadingCarriers={isLoadingCarriers}
+          isCustomersLoading={isCustomersLoading}
+        />
 
         {/* Schedule & Capacity Section */}
         <Grid item xs={12}>
@@ -646,7 +1334,7 @@ export function OrderForm({
           <Stack direction="row" alignItems="center" spacing={1}>
             <TruckIcon size={24} />
             <Typography variant="h6" gutterBottom>
-              Cargo Requirements
+              Crane Requirements
             </Typography>
           </Stack>
         </Grid>
@@ -661,7 +1349,7 @@ export function OrderForm({
                 value={formData[`cr${num}` as keyof OrderFormData]}
                 onChange={handleInputChange(`cr${num}` as keyof OrderFormData)}
                 error={!!errors[`cr${num}`]}
-                helperText={errors[`cr${num}`] || `Cargo requirement ${num} value`}
+                helperText={errors[`cr${num}`] || `Crane Rate requirement ${num} value`}
                 inputProps={{ min: 0, step: 1 }}
               />
             </Grid>

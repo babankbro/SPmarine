@@ -478,7 +478,7 @@ export default function OrderDetailsPage() {
            <CardContent>
              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
                <TruckIcon size={24} />
-               <Typography variant="h6">Cargo Requirements</Typography>
+               <Typography variant="h6">Crane Requirements</Typography>
              </Stack>
              <Divider sx={{ mb: 2 }} />
              
