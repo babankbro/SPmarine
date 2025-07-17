@@ -129,7 +129,8 @@ export default function TugboatDetailsPage() {
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      hour12: false
     });
   };
 
@@ -335,17 +336,7 @@ export default function TugboatDetailsPage() {
                   </Stack>
                 </Box>
                 
-                <Box>
-                  <Typography variant="subtitle2" color="text.secondary">
-                    Water Status
-                  </Typography>
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <CompassIcon size={16} />
-                    <Typography variant="body1" fontWeight="medium">
-                      {tugboat.waterStatus}
-                    </Typography>
-                  </Stack>
-                </Box>
+                
                 
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">

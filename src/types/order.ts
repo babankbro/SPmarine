@@ -20,6 +20,8 @@ export interface Order {
   cr5: number;
   cr6: number;
   cr7: number;
+  cr8: number;
+  cr9: number;
   timeReadyCR1: number;
   timeReadyCR2: number;
   timeReadyCR3: number;
@@ -27,6 +29,8 @@ export interface Order {
   timeReadyCR5: number;
   timeReadyCR6: number;
   timeReadyCR7: number;
+  timeReadyCR8: number;
+  timeReadyCR9: number;
   // Relations (optional for frontend)
   startStation?: Station;
   destStation?: Station;
@@ -51,6 +55,8 @@ export interface CreateOrderRequest {
   cr5: number;
   cr6: number;
   cr7: number;
+  cr8: number;
+  cr9: number;
   timeReadyCR1: number;
   timeReadyCR2: number;
   timeReadyCR3: number;
@@ -58,6 +64,8 @@ export interface CreateOrderRequest {
   timeReadyCR5: number;
   timeReadyCR6: number;
   timeReadyCR7: number;
+  timeReadyCR8: number;
+  timeReadyCR9: number;
 }
 
 export interface UpdateOrderRequest {
@@ -79,6 +87,8 @@ export interface UpdateOrderRequest {
   cr5?: number;
   cr6?: number;
   cr7?: number;
+  cr8?: number;
+  cr9?: number;
   timeReadyCR1?: number;
   timeReadyCR2?: number;
   timeReadyCR3?: number;
@@ -86,6 +96,8 @@ export interface UpdateOrderRequest {
   timeReadyCR5?: number;
   timeReadyCR6?: number;
   timeReadyCR7?: number;
+  timeReadyCR8?: number;
+  timeReadyCR9?: number;
 }
 
 export interface OrderFormData {
@@ -107,6 +119,8 @@ export interface OrderFormData {
   cr5: string;
   cr6: string;
   cr7: string;
+  cr8: string;
+  cr9: string;
   timeReadyCR1: string;
   timeReadyCR2: string;
   timeReadyCR3: string;
@@ -114,4 +128,6 @@ export interface OrderFormData {
   timeReadyCR5: string;
   timeReadyCR6: string;
   timeReadyCR7: string;
+  timeReadyCR8: string;
+  timeReadyCR9: string;
 }

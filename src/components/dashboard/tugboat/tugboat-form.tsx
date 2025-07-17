@@ -23,7 +23,6 @@ import {
   InputAdornment,
   FormHelperText,
 } from "@mui/material";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
@@ -40,6 +39,7 @@ import { Tugboat, CreateTugboatRequest, UpdateTugboatRequest, TugboatFormData } 
 import { Station } from "@/types/station";
 import { el } from "date-fns/locale";
 import BasicSearchableStationSelect from  "@/components/core/search/station-search-selected";
+import HybridDateTimePicker from "@/components/core/datetime/HybridDateTimePicker";
 
 interface TugboatFormProps {
   open: boolean;
@@ -161,6 +161,7 @@ export function TugboatForm({
       setFormData(prev => ({ ...prev, [field]: value, waterStatus: value }));
     }
   };
+
 
   const handleDateChange = (date: Date | null) => {
     if (date) {
@@ -605,7 +606,7 @@ export function TugboatForm({
           </FormControl>
         </Grid>
 
-        <Grid item xs={12} sm={6}>
+        {/* <Grid item xs={12} sm={6}>
           <FormControl fullWidth error={!!errors.waterStatus}>
             <InputLabel>Current Water Status</InputLabel>
             <Select
@@ -630,29 +631,19 @@ export function TugboatForm({
               {errors.waterStatus || 'Current location type'}
             </FormHelperText>
           </FormControl>
-        </Grid>
+        </Grid> */}
 
         <Grid item xs={12}>
-          <DateTimePicker
-            label="Ready Date & Time"
-            value={new Date(formData.readyDatetime)}
-            onChange={handleDateChange}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                error: !!errors.readyDatetime,
-                helperText: errors.readyDatetime || 'When this tugboat will be ready for operations',
-                InputProps: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <CalendarIcon size={20} />
-                    </InputAdornment>
-                  ),
-                },
-              }
-            }}
-            minDateTime={new Date()}
-          />
+          <HybridDateTimePicker
+              label="Ready Date & Time"
+              value={new Date(formData.readyDatetime)}
+              onChange={handleDateChange}
+              error={!!errors.readyDatetime}
+              helperText={errors.readyDatetime}
+              fullWidth
+              required
+              format24h={true}
+            />
         </Grid>
 
         {/* Station Assignment Section */}

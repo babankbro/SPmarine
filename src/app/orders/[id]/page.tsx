@@ -86,7 +86,8 @@ export default function OrderDetailsPage() {
      month: 'long',
      day: 'numeric',
      hour: '2-digit',
-     minute: '2-digit'
+     minute: '2-digit',
+     hour12: false
    });
  };
 
@@ -483,7 +484,7 @@ export default function OrderDetailsPage() {
              <Divider sx={{ mb: 2 }} />
              
              <Grid container spacing={2}>
-               {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                  <Grid item xs={12} sm={6} key={num}>
                    <Box sx={{ p: 1, bgcolor: 'grey.50', borderRadius: 1 }}>
                      <Typography variant="subtitle2" color="text.secondary">

@@ -38,6 +38,7 @@ import { useBarge } from "@/hooks/use-barge";
 import { BargeForm } from "@/components/dashboard/barge/barge-form";
 import { Barge } from "@/types/barge";
 import { paths } from "@/paths";
+import formatDateTime from "@/components/core/datetime/format-datetime";
 
 export default function BargeDetailsPage() {
   const params = useParams();
@@ -120,17 +121,6 @@ export default function BargeDetailsPage() {
         console.error('Failed to refresh barge:', error);
       }
     }
-  };
-
-  const formatDateTime = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return dateObj.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   const getReadyStatus = (barge: Barge) => {
@@ -335,17 +325,17 @@ export default function BargeDetailsPage() {
                   </Stack>
                 </Box>
                 
-                <Box>
+                {/* <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    Ready Date & Time
+                    
                   </Typography>
                   <Stack direction="row" alignItems="center" spacing={1}>
                     <ClockIcon size={16} />
                     <Typography variant="body1" fontWeight="medium">
-                      {formatDateTime(barge.readyDatetime)}
+                    
                     </Typography>
                   </Stack>
-                </Box>
+                </Box> */}
               </Stack>
             </CardContent>
           </Card>

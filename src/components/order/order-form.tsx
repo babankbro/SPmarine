@@ -26,7 +26,7 @@ import {
   CircularProgress,
 } from "@mui/material";
 import { SelectChangeEvent } from "@mui/material/Select";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import HybridDateTimePicker from "@/components/core/datetime/HybridDateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import {
@@ -94,6 +94,8 @@ const initialFormData: OrderFormData = {
   cr5: '0',
   cr6: '0',
   cr7: '0',
+  cr8: '0',
+  cr9: '0',
   timeReadyCR1: '0',
   timeReadyCR2: '0',
   timeReadyCR3: '0',
@@ -101,6 +103,8 @@ const initialFormData: OrderFormData = {
   timeReadyCR5: '0',
   timeReadyCR6: '0',
   timeReadyCR7: '0',
+  timeReadyCR8: '0',
+  timeReadyCR9: '0',
 };
 
 // OrderTypeSelect Component
@@ -883,6 +887,8 @@ export function OrderForm({
         cr5: order.cr5.toString(),
         cr6: order.cr6.toString(),
         cr7: order.cr7.toString(),
+        cr8: order.cr8.toString(),
+        cr9: order.cr9.toString(),
         timeReadyCR1: order.timeReadyCR1.toString(),
         timeReadyCR2: order.timeReadyCR2.toString(),
         timeReadyCR3: order.timeReadyCR3.toString(),
@@ -890,6 +896,8 @@ export function OrderForm({
         timeReadyCR5: order.timeReadyCR5.toString(),
         timeReadyCR6: order.timeReadyCR6.toString(),
         timeReadyCR7: order.timeReadyCR7.toString(),
+        timeReadyCR8: order.timeReadyCR8.toString(),
+        timeReadyCR9: order.timeReadyCR9.toString(),
       });
       setIsIdValid(true);
       setHasIdBeenChecked(true);
@@ -1109,6 +1117,8 @@ export function OrderForm({
           cr5: Number(formData.cr5),
           cr6: Number(formData.cr6),
           cr7: Number(formData.cr7),
+          cr8: Number(formData.cr8),
+          cr9: Number(formData.cr9),
           timeReadyCR1: Number(formData.timeReadyCR1),
           timeReadyCR2: Number(formData.timeReadyCR2),
           timeReadyCR3: Number(formData.timeReadyCR3),
@@ -1116,6 +1126,8 @@ export function OrderForm({
           timeReadyCR5: Number(formData.timeReadyCR5),
           timeReadyCR6: Number(formData.timeReadyCR6),
           timeReadyCR7: Number(formData.timeReadyCR7),
+          timeReadyCR8: Number(formData.timeReadyCR8),
+          timeReadyCR9: Number(formData.timeReadyCR9),
         };
 
         await createOrder(orderData);
@@ -1138,6 +1150,8 @@ export function OrderForm({
           cr5: Number(formData.cr5),
           cr6: Number(formData.cr6),
           cr7: Number(formData.cr7),
+          cr8: Number(formData.cr8),
+          cr9: Number(formData.cr9),
           timeReadyCR1: Number(formData.timeReadyCR1),
           timeReadyCR2: Number(formData.timeReadyCR2),
           timeReadyCR3: Number(formData.timeReadyCR3),
@@ -1145,6 +1159,8 @@ export function OrderForm({
           timeReadyCR5: Number(formData.timeReadyCR5),
           timeReadyCR6: Number(formData.timeReadyCR6),
           timeReadyCR7: Number(formData.timeReadyCR7),
+          timeReadyCR8: Number(formData.timeReadyCR8),
+          timeReadyCR9: Number(formData.timeReadyCR9),
         };
         console.log("Updating order with data:", orderData)
         await updateOrder(order.id, orderData);
@@ -1258,40 +1274,29 @@ export function OrderForm({
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <DateTimePicker
-            label="Start Date & Time"
-            value={new Date(formData.startDateTime)}
-            onChange={handleDateChange('startDateTime')}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                error: !!errors.startDateTime,
-                helperText: errors.startDateTime || 'When the order should start',
-                InputProps: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <CalendarIcon size={20} />
-                    </InputAdornment>
-                  ),
-                },
-              }
-            }}
-          />
+          <HybridDateTimePicker
+              label="Start Date & Time"
+              value={new Date(formData.startDateTime)}
+              onChange={handleDateChange('startDateTime')}
+              error={!!errors.startDateTime}
+              helperText={errors.startDateTime}
+              fullWidth
+              required
+              format24h={true}
+            />
         </Grid>
 
         <Grid item xs={12} sm={6}>
-          <DateTimePicker
-            label="Due Date & Time"
-            value={new Date(formData.dueDateTime)}
-            onChange={handleDateChange('dueDateTime')}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                error: !!errors.dueDateTime,
-                helperText: errors.dueDateTime || 'When the order must be completed',
-              }
-            }}
-          />
+          <HybridDateTimePicker
+              label="Due Date & Time"
+              value={new Date(formData.dueDateTime)}
+              onChange={handleDateChange('dueDateTime')}
+              error={!!errors.dueDateTime}
+              helperText={errors.dueDateTime}
+              fullWidth
+              required
+              format24h={true}
+            />
         </Grid>
 
         <Grid item xs={12} sm={6}>
@@ -1339,7 +1344,7 @@ export function OrderForm({
           </Stack>
         </Grid>
 
-        {[1, 2, 3, 4, 5, 6, 7].map((num) => (
+        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
           <Grid container spacing={2} key={num} item xs={12}>
             <Grid item xs={12} sm={6}>
               <TextField

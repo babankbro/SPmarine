@@ -29,6 +29,10 @@ import { useStation } from "@/hooks/use-station";
 import { Barge, CreateBargeRequest, UpdateBargeRequest, BargeFormData } from "@/types/barge";
 import { Station } from "@/types/station";
 import BasicSearchableStationSelect  from  "@/components/core/search/station-search-selected";
+import FlexibleDateTimePicker  from  "@/components/core/datetime/FlexibleDateTimePicker";
+import HybridDateTimePicker from "@/components/core/datetime/HybridDateTimePicker";
+
+
 
 interface BargeFormProps {
   open: boolean;
@@ -77,6 +81,7 @@ export function BargeForm({
 
   // Reset form when dialog opens/closes or mode changes
   useEffect(() => {
+    //console.log(`BargeForm: open=${open}, mode=${mode}, barge=${JSON.stringify(barge)}`);
     if (mode === 'edit' && barge) {
       setFormData({
         id: barge.id,
@@ -86,7 +91,8 @@ export function BargeForm({
         waterStatus: barge.waterStatus,
         stationId: barge.stationId || '',
         setupTime: barge.setupTime.toString(),
-        readyDatetime: typeof barge.readyDatetime === 'string' ? barge.readyDatetime : barge.readyDatetime.toISOString(),
+        readyDatetime: typeof barge.readyDatetime === 'string' ? barge.readyDatetime :
+         (barge.readyDatetime ? barge.readyDatetime.toISOString() : new Date().toISOString()),
         distanceKm: barge.distanceKm?.toString() || '',
       });
       setIsIdValid(true);
@@ -428,19 +434,17 @@ export function BargeForm({
             )}
           </FormControl>
         </Grid> */}
-
+        
         <Grid item xs={12} sm={12}>
-          <DateTimePicker
+          <HybridDateTimePicker
             label="Ready Date & Time"
             value={new Date(formData.readyDatetime)}
             onChange={handleDateChange}
-            slotProps={{
-              textField: {
-                fullWidth: true,
-                error: !!errors.readyDatetime,
-                helperText: errors.readyDatetime,
-              }
-            }}
+            error={!!errors.readyDatetime}
+            helperText={errors.readyDatetime}
+            fullWidth
+            required
+            format24h={true}
           />
         </Grid>
 
