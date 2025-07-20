@@ -15,7 +15,7 @@ export interface Tugboat {
   waterStatus: 'SEA' | 'RIVER';
   readyDatetime: Date | string;
   stationId?: string;
-  station?: Station;
+station?: Station;
 }
 
 export interface CreateTugboatRequest {

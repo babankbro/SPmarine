@@ -109,9 +109,12 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 	const { data: orderList } = useOrder();
 	if (!tugboatList) return <></>;
 	if (!costs) return <></>;
-
+	//console.log("Tugboats: ", tugboatList);
 	useEffect(() => {
-		// Apply filtering based on searchTerm and selected filters
+		// Apply filtering ba
+		// sed on searchTerm and selected filters
+		//console.log("Costs: ", costs);
+		//console.log("Tugboats: ", tugboatList);
 		const newFilteredCosts = costs.filter((cost) => {
 			const matchesSearch =
 				!searchTerm ||
@@ -126,8 +129,10 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 		});
 
 		// Calculate total values
-		const calculatedTotalWeight =  newFilteredCosts.filter(cost => cost.tugboatId.toLowerCase().includes('tbr'))
-																					 .reduce((sum, cost) => sum + cost.totalLoad, 0);
+		const calculatedTotalWeight = newFilteredCosts.filter((cost) => {
+			const tugboat = tugboatList.find(t => t.id === cost.tugboatId);
+			return tugboat?.type === 'RIVER';
+		}).reduce((sum, cost) => sum + cost.totalLoad, 0);
 		const calculatedTotalDistance = newFilteredCosts.reduce((sum, cost) => sum + cost.distance, 0);
 		const calculatedTotalTime = newFilteredCosts.reduce((sum, cost) => sum + cost.time, 0);
 		const calculatedTotalFuelConsumption = newFilteredCosts.reduce(
@@ -140,7 +145,7 @@ export function CostTable({ costs, isLoading }: CostTableProps) {
 		setTotalTime(calculatedTotalTime);
 		setTotalFuelConsumption(calculatedTotalFuelConsumption);
 		setFilteredCosts(newFilteredCosts);
-	}, [costs, searchTerm, selectedTugboats, selectedOrders]);
+	}, [costs, searchTerm, selectedTugboats, selectedOrders, tugboatList]);
 
 	const formatNumber = (num: number) => {
 		return new Intl.NumberFormat("en-US", {

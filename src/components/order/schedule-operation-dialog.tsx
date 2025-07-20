@@ -1,7 +1,7 @@
 // src/components/order/schedule-operation-dialog.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -22,6 +22,15 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  Checkbox,
+  Paper,
+  TableContainer,
+  Tooltip,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -33,6 +42,9 @@ import {
   XCircle as ErrorIcon
 } from "@phosphor-icons/react/dist/ssr";
 import axios from "axios";
+import { useOrderContext } from "@/contexts/order-context";
+import { useEntityNames } from "@/hooks/use-entity-names";
+import { Order } from "@/types/order";
 
 interface ScheduleOperationDialogProps {
   open: boolean;
@@ -63,10 +75,9 @@ const steps = [
   'Finalizing Schedule'
 ];
 
-
 // API Configuration using environment variables
 const API_CONFIG = {
-  SCHEDULE_ENDPOINT: '/api/schedule',
+  SCHEDULE_ENDPOINT: 'http://127.0.0.1:5000/orders/multiple',
   TIMEOUT: 30000,
   HEADERS: {
     'Content-Type': 'application/json',
@@ -75,9 +86,6 @@ const API_CONFIG = {
     
   }
 };
-
-
-
 
 export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDialogProps) {
   const [formData, setFormData] = useState<ScheduleFormData>({
@@ -97,6 +105,19 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string>('');
 
+  // Add state for selected orders
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  
+  // Get orders data from context
+  const { data: orders, isLoading: isLoadingOrders } = useOrderContext();
+  
+  // Get entity names for display
+  const { 
+    getStationName, 
+    getCustomerName, 
+    isLoading: isLoadingNames 
+  } = useEntityNames();
+
   const handleInputChange = (field: keyof ScheduleFormData) => (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -110,6 +131,26 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
     }
   };
 
+  // Handle order selection
+  const handleOrderSelect = (orderId: string) => {
+    setSelectedOrders(prev => {
+      if (prev.includes(orderId)) {
+        return prev.filter(id => id !== orderId);
+      } else {
+        return [...prev, orderId];
+      }
+    });
+  };
+  
+  // Handle "select all" orders
+  const handleSelectAllOrders = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.checked && orders) {
+      setSelectedOrders(orders.map(order => order.id));
+    } else {
+      setSelectedOrders([]);
+    }
+  };
+
   const validateForm = (): boolean => {
     if (formData.endTime <= formData.startTime) {
       setError('End time must be after start time');
@@ -117,6 +158,10 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
     }
     if (formData.timeCompute <= 0) {
       setError('Time compute must be greater than 0');
+      return false;
+    }
+    if (selectedOrders.length === 0) {
+      setError('Please select at least one order');
       return false;
     }
     setError('');
@@ -140,7 +185,7 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
   const runScheduleOperation = async () => {
     if (!validateForm()) return;
 
-    console.log('Starting schedule operation...');
+    console.log('Starting schedule operation with selected orders:', selectedOrders);
     setIsRunning(true);
     setError('');
     setResult(null);
@@ -159,69 +204,67 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
         setProgress(prev => ({
           ...prev,
           step: stepIndex,
-          message: steps[stepIndex],
+          message: `Starting ${steps[stepIndex]}...`,
           progress: 0,
-          status: 'running'
         }));
 
-        // Simulate step progress
-        await simulateProgress(stepIndex, formData.timeCompute * 1000 / steps.length);
-
-        // If it's the computation step, make the actual API call
-        if (stepIndex === 1) {
-          try {
-            console.log('Sending request to:', API_CONFIG.SCHEDULE_ENDPOINT);
-            const apiPayload = {
-                startTime: formData.startTime.toISOString(),
-                endTime: formData.endTime.toISOString(),
-                timeCompute: formData.timeCompute,
-                description: formData.description,
-                operationType: 'schedule',
-                requestedBy: 'user',
-                timestamp: new Date().toISOString()
-            };
-
-            
-            console.log('Payload:', apiPayload);
-
-            
-            // Make the POST request using configured endpoint
-            const response = await axios.post(
-                API_CONFIG.SCHEDULE_ENDPOINT,
-                apiPayload,
-                {
-                    headers: API_CONFIG.HEADERS,
-                    timeout: API_CONFIG.TIMEOUT,
-                    withCredentials: true
-                }
-            );
-            
-            console.log('API Response:', response.data);
-            setResult(response.data);
-          } catch (apiError: any) {
-            throw new Error(apiError.response?.data?.message || 'API call failed');
-          }
-        }
+        // Simulate API call with progress updates
+        await simulateProgress(stepIndex, 1000);
       }
 
-      // Complete
-      setProgress({
-        step: steps.length,
-        message: 'Schedule operation completed successfully!',
-        progress: 100,
-        status: 'completed',
-        startedAt: progress.startedAt,
-        completedAt: new Date()
+      // Prepare selected order data
+      const selectedOrderData = orders?.filter(order => 
+        selectedOrders.includes(order.id)
+      ) || [];
+
+      const order_ids = selectedOrderData.map(order => order.id);
+      console.log('Selected order IDs:', order_ids);
+
+      // Actual API call would happen here
+      // Replace this with your actual API integration
+      const response = await axios.post(API_CONFIG.SCHEDULE_ENDPOINT, {
+        scheduleConfig: {
+          startTime: formData.startTime.toISOString(),
+          endTime: formData.endTime.toISOString(),
+          timeCompute: formData.timeCompute,
+          description: formData.description
+        },
+        order_ids: order_ids
+      }, {
+        headers: API_CONFIG.HEADERS,
+        timeout: API_CONFIG.TIMEOUT
       });
 
-    } catch (err: any) {
-      console.error('Schedule operation failed:', err);
-      setError(err.message || 'Failed to run schedule operation');
+      const data = response.data;
+
+      // Set completion status
+      setProgress(prev => ({
+        ...prev,
+        status: 'completed',
+        message: 'Operation completed successfully',
+        completedAt: new Date()
+      }));
+
+      setResult(data);
+      console.log('Schedule operation completed successfully:', data);
+
+    } catch (error) {
+      console.error('Schedule operation failed:', error);
+      
       setProgress(prev => ({
         ...prev,
         status: 'error',
-        message: 'Operation failed'
+        message: 'Operation failed',
+        completedAt: new Date()
       }));
+
+      if (axios.isAxiosError(error)) {
+        setError(error.response?.data?.message || error.message);
+      } else if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unknown error occurred');
+      }
     } finally {
       setIsRunning(false);
     }
@@ -243,6 +286,7 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
       });
       setResult(null);
       setError('');
+      setSelectedOrders([]);
       onClose();
     }
   };
@@ -269,45 +313,70 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
     <LocalizationProvider dateAdapter={AdapterDateFns}>
       <Dialog 
         open={open} 
-        onClose={handleClose}
-        maxWidth="md" 
-        fullWidth
+        onClose={isRunning ? undefined : handleClose}
+        fullWidth 
+        maxWidth="md"
         PaperProps={{
-          sx: { height: '80vh' }
+          sx: { borderRadius: 2 }
         }}
       >
-        <DialogTitle>
-          <Box display="flex" alignItems="center" gap={2}>
-            <PlayIcon size={24} />
-            <Typography variant="h6">Schedule Operation</Typography>
-            <Chip
-              icon={getStatusIcon(progress.status)}
-              label={progress.status.toUpperCase()}
-              color={getStatusColor(progress.status) as any}
-              size="small"
-            />
-          </Box>
+        <DialogTitle sx={{ pb: 1 }}>
+          Schedule Operation
         </DialogTitle>
 
-        <DialogContent dividers sx={{ p: 3 }}>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+        {error && (
+          <Alert severity="error" sx={{ mx: 3 }}>
+            {error}
+          </Alert>
+        )}
 
+        <DialogContent sx={{ pt: 2 }}>
           <Grid container spacing={3}>
             {/* Form Section */}
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" gutterBottom>
-                Operation Parameters
-              </Typography>
-              
               <Grid container spacing={2}>
-                
-
                 <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Operation Configuration
+                  </Typography>
+                  
                   <TextField
+                    margin="normal"
+                    fullWidth
+                    label="Operation Description"
+                    value={formData.description}
+                    onChange={handleInputChange('description')}
+                    disabled={isRunning}
+                  />
+
+                  <DateTimePicker
+                    label="Start Time"
+                    value={formData.startTime}
+                    onChange={handleDateChange('startTime')}
+                    slotProps={{
+                      textField: {
+                        margin: 'normal',
+                        fullWidth: true,
+                        disabled: isRunning
+                      }
+                    }}
+                  />
+
+                  <DateTimePicker
+                    label="End Time"
+                    value={formData.endTime}
+                    onChange={handleDateChange('endTime')}
+                    slotProps={{
+                      textField: {
+                        margin: 'normal',
+                        fullWidth: true,
+                        disabled: isRunning
+                      }
+                    }}
+                  />
+
+                  <TextField
+                    margin="normal"
                     fullWidth
                     type="number"
                     label="Time Compute (minutes)"
@@ -319,7 +388,85 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
                   />
                 </Grid>
 
-                
+                {/* Order Selection Section */}
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    Select Orders
+                  </Typography>
+                  
+                  {isLoadingOrders || isLoadingNames ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', p: 2 }}>
+                      <CircularProgress size={24} />
+                    </Box>
+                  ) : orders && orders.length > 0 ? (
+                    <TableContainer component={Paper} sx={{ maxHeight: 300, overflow: 'auto' }}>
+                      <Table size="small" stickyHeader>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell padding="checkbox">
+                              <Checkbox
+                                indeterminate={selectedOrders.length > 0 && selectedOrders.length < orders.length}
+                                checked={orders.length > 0 && selectedOrders.length === orders.length}
+                                onChange={handleSelectAllOrders}
+                              />
+                            </TableCell>
+                            <TableCell>Order ID</TableCell>
+                            <TableCell>Type</TableCell>
+                            <TableCell>From</TableCell>
+                            <TableCell>To</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {orders.map((order) => {
+                            const fromName = getStationName(order.startStationId) || 'Unknown';
+                            const toName = getStationName(order.destStationId) || 'Unknown';
+                            
+                            return (
+                              <TableRow 
+                                key={order.id} 
+                                hover
+                                onClick={() => handleOrderSelect(order.id)}
+                                sx={{ cursor: 'pointer' }}
+                              >
+                                <TableCell padding="checkbox">
+                                  <Checkbox 
+                                    checked={selectedOrders.includes(order.id)}
+                                    onChange={() => handleOrderSelect(order.id)}
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <Tooltip title={order.id}>
+                                    <Typography variant="body2" noWrap>
+                                      {order.id.substring(0, 8)}...
+                                    </Typography>
+                                  </Tooltip>
+                                </TableCell>
+                                <TableCell>
+                                  <Chip 
+                                    label={order.type} 
+                                    color={order.type === 'IMPORT' ? 'primary' : 'secondary'}
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>{fromName}</TableCell>
+                                <TableCell>{toName}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  ) : (
+                    <Alert severity="info">No orders available</Alert>
+                  )}
+                  
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {selectedOrders.length} orders selected
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
             </Grid>
 
@@ -408,7 +555,7 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
           <Button 
             onClick={runScheduleOperation}
             variant="contained"
-            disabled={isRunning || progress.status === 'completed'}
+            disabled={isRunning || progress.status === 'completed' || selectedOrders.length === 0}
             startIcon={isRunning ? <CircularProgress size={16} /> : <PlayIcon size={16} />}
           >
             {isRunning ? 'Running Operation...' : 'Start Operation'}
