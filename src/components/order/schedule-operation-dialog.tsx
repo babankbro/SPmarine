@@ -77,7 +77,7 @@ const steps = [
 
 // API Configuration using environment variables
 const API_CONFIG = {
-  SCHEDULE_ENDPOINT: 'http://127.0.0.1:5000/orders/multiple',
+  SCHEDULE_ENDPOINT: 'http://45.82.72.96:18005/orders/multiple',
   TIMEOUT: 30000,
   HEADERS: {
     'Content-Type': 'application/json',
@@ -222,15 +222,14 @@ export function ScheduleOperationDialog({ open, onClose }: ScheduleOperationDial
 
       // Actual API call would happen here
       // Replace this with your actual API integration
-      const response = await axios.post(API_CONFIG.SCHEDULE_ENDPOINT, {
-        scheduleConfig: {
+      const response = await axios.post(API_CONFIG.SCHEDULE_ENDPOINT, 
+        {
           startTime: formData.startTime.toISOString(),
           endTime: formData.endTime.toISOString(),
           timeCompute: formData.timeCompute,
-          description: formData.description
-        },
-        order_ids: order_ids
-      }, {
+          description: formData.description,
+          order_ids: order_ids
+        }, {
         headers: API_CONFIG.HEADERS,
         timeout: API_CONFIG.TIMEOUT
       });
